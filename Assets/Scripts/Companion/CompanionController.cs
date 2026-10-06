@@ -8,7 +8,8 @@ public class CompanionController : MonoBehaviour
         Standby,
         Following,
         Chasing,
-        Attacking
+        Attacking,
+        Frozen
     }
 
     [Header("ロボットデータ")]
@@ -21,11 +22,9 @@ public class CompanionController : MonoBehaviour
 
     [Header("飛行設定")]
     [SerializeField] private bool isFlying = false;
-
     [SerializeField] private float hoverHeight = 2.5f;
 
     private float hoverY;
-
     private bool originalUseGravity;
 
     [Header("敵検索")]
@@ -33,18 +32,23 @@ public class CompanionController : MonoBehaviour
 
     [Header("追従設定")]
     [SerializeField] private float followDistance = 2.5f;
-
     [SerializeField] private float warpDistance = 15.0f;
 
     private Rigidbody rb;
 
     private CompanionState currentState;
-
     private Transform currentTarget;
 
     private bool isDeployed;
 
+    // ロックオンによる強制ターゲット
+    private Transform lockedTarget;
+
+    // 交代前の味方として固定されているか
+    private bool isFrozenPrevious;
+
     public bool IsDeployed => isDeployed;
+    public bool IsFrozenPrevious => isFrozenPrevious;
 
     private void Awake()
     {
@@ -54,10 +58,18 @@ public class CompanionController : MonoBehaviour
 
         currentState = CompanionState.Standby;
         isDeployed = false;
+        isFrozenPrevious = false;
     }
 
     private void Update()
     {
+        // 前回の味方として固定中
+        if (isFrozenPrevious)
+        {
+            StopMoving();
+            return;
+        }
+
         // 待機中ならAIを動かさない
         if (!isDeployed)
             return;
@@ -65,7 +77,29 @@ public class CompanionController : MonoBehaviour
         if (player == null)
             return;
 
-        FindTarget();
+        // ロックオン優先
+        if (lockedTarget != null)
+        {
+            if (lockedTarget.gameObject.activeInHierarchy)
+            {
+                if (currentTarget != lockedTarget)
+                {
+                    currentTarget = lockedTarget;
+                    currentState = CompanionState.Chasing;
+                }
+            }
+            else
+            {
+                lockedTarget = null;
+                currentTarget = null;
+            }
+        }
+
+        // ロックオンがない場合だけ通常索敵
+        if (lockedTarget == null)
+        {
+            FindTarget();
+        }
 
         if (isFlying)
         {
@@ -85,6 +119,10 @@ public class CompanionController : MonoBehaviour
             case CompanionState.Attacking:
                 UpdateAttacking();
                 break;
+
+            case CompanionState.Frozen:
+                StopMoving();
+                break;
         }
     }
 
@@ -93,6 +131,7 @@ public class CompanionController : MonoBehaviour
         player = playerTransform;
     }
 
+    // 出撃
     public void Deploy()
     {
         if (player == null)
@@ -104,10 +143,16 @@ public class CompanionController : MonoBehaviour
             return;
         }
 
+        isFrozenPrevious = false;
         isDeployed = true;
 
         currentTarget = null;
+        lockedTarget = null;
+
         currentState = CompanionState.Following;
+
+        // Rigidbodyを通常状態に戻す
+        rb.isKinematic = false;
 
         // プレイヤーの後ろに出現
         Vector3 spawnPosition =
@@ -116,14 +161,21 @@ public class CompanionController : MonoBehaviour
 
         if (isFlying)
         {
-            hoverY = player.position.y + hoverHeight;
+            hoverY =
+                player.position.y +
+                hoverHeight;
+
             spawnPosition.y = hoverY;
 
             rb.useGravity = false;
         }
         else
         {
-            spawnPosition.y = transform.position.y;
+            spawnPosition.y =
+                transform.position.y;
+
+            rb.useGravity =
+                originalUseGravity;
         }
 
         rb.position = spawnPosition;
@@ -135,15 +187,21 @@ public class CompanionController : MonoBehaviour
         );
     }
 
+    // 通常待機
     public void Standby()
     {
         isDeployed = false;
+        isFrozenPrevious = false;
 
         currentTarget = null;
-        currentState = CompanionState.Standby;
+        lockedTarget = null;
+
+        currentState =
+            CompanionState.Standby;
 
         StopMoving();
 
+        rb.isKinematic = false;
         rb.useGravity = originalUseGravity;
 
         Debug.Log(
@@ -151,56 +209,160 @@ public class CompanionController : MonoBehaviour
         );
     }
 
+    // 交代前の味方をその場に固定
+    public void FreezeAsPreviousCompanion()
+    {
+        isDeployed = false;
+        isFrozenPrevious = true;
+
+        currentTarget = null;
+        lockedTarget = null;
+
+        currentState =
+            CompanionState.Frozen;
+
+        StopMoving();
+
+        // 完全固定
+        // Colliderは消さないので足場として使用可能
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
+        rb.useGravity = false;
+        rb.isKinematic = true;
+
+        Debug.Log(
+            $"{gameObject.name} : その場に停止"
+        );
+    }
+
+    // 固定状態解除
+    public void ReleaseFrozenState()
+    {
+        isFrozenPrevious = false;
+
+        rb.isKinematic = false;
+
+        if (isFlying)
+        {
+            rb.useGravity = false;
+        }
+        else
+        {
+            rb.useGravity =
+                originalUseGravity;
+        }
+    }
+
+    // ロックオン
+    public void SetLockedTarget(
+        Transform target)
+    {
+        if (!isDeployed)
+            return;
+
+        if (isFrozenPrevious)
+            return;
+
+        lockedTarget = target;
+        currentTarget = target;
+
+        if (target != null)
+        {
+            currentState =
+                CompanionState.Chasing;
+
+            Debug.Log(
+                $"{gameObject.name} : " +
+                $"ロックオン対象 → {target.name}"
+            );
+        }
+        else
+        {
+            currentState =
+                CompanionState.Following;
+        }
+    }
+
+    public void ClearLockedTarget()
+    {
+        lockedTarget = null;
+        currentTarget = null;
+
+        if (isDeployed &&
+            !isFrozenPrevious)
+        {
+            currentState =
+                CompanionState.Following;
+        }
+    }
+
+    // 通常索敵
     private void FindTarget()
     {
         if (currentTarget != null)
             return;
 
-        Collider[] colliders = Physics.OverlapSphere(
-            transform.position,
-            searchRadius,
-            LayerMask.GetMask("Enemy")
-        );
+        Collider[] colliders =
+            Physics.OverlapSphere(
+                transform.position,
+                searchRadius,
+                LayerMask.GetMask("Enemy")
+            );
 
         if (colliders.Length == 0)
         {
-            currentState = CompanionState.Following;
+            currentState =
+                CompanionState.Following;
+
             return;
         }
 
-        float closestDistance = float.MaxValue;
+        float closestDistance =
+            float.MaxValue;
 
         Transform closestEnemy = null;
 
         foreach (Collider collider in colliders)
         {
-            float distance = HorizontalDistance(
-                transform.position,
-                collider.transform.position
-            );
+            if (collider == null)
+                continue;
 
-            if (distance < closestDistance)
+            float distance =
+                HorizontalDistance(
+                    transform.position,
+                    collider.transform.position
+                );
+
+            if (distance <
+                closestDistance)
             {
-                closestDistance = distance;
-                closestEnemy = collider.transform;
+                closestDistance =
+                    distance;
+
+                closestEnemy =
+                    collider.transform;
             }
         }
 
         if (closestEnemy != null)
         {
-            currentTarget = closestEnemy;
+            currentTarget =
+                closestEnemy;
 
             currentState =
                 CompanionState.Chasing;
         }
     }
 
+    // プレイヤー追従
     private void UpdateFollowing()
     {
-        float distance = HorizontalDistance(
-            transform.position,
-            player.position
-        );
+        float distance =
+            HorizontalDistance(
+                transform.position,
+                player.position
+            );
 
         if (distance > warpDistance)
         {
@@ -217,13 +379,23 @@ public class CompanionController : MonoBehaviour
         MoveTowards(player.position);
     }
 
+    // 敵追跡
     private void UpdateChasing()
     {
         if (currentTarget == null ||
             !currentTarget.gameObject.activeInHierarchy)
         {
+            // ロックオン対象が倒された
+            if (lockedTarget == currentTarget)
+            {
+                lockedTarget = null;
+            }
+
             currentTarget = null;
-            currentState = CompanionState.Following;
+
+            currentState =
+                CompanionState.Following;
+
             StopMoving();
 
             return;
@@ -235,29 +407,45 @@ public class CompanionController : MonoBehaviour
             return;
         }
 
-        float distance = HorizontalDistance(
-            transform.position,
-            currentTarget.position
-        );
+        float distance =
+            HorizontalDistance(
+                transform.position,
+                currentTarget.position
+            );
 
-        if (distance <= robotData.AttackRange)
+        if (distance <=
+            robotData.AttackRange)
         {
-            currentState = CompanionState.Attacking;
+            currentState =
+                CompanionState.Attacking;
+
             StopMoving();
+
             return;
         }
 
-        MoveTowards(currentTarget.position);
+        MoveTowards(
+            currentTarget.position
+        );
     }
 
+    // 攻撃中
     private void UpdateAttacking()
     {
-        // ターゲットが消滅・非アクティブになった
         if (currentTarget == null ||
             !currentTarget.gameObject.activeInHierarchy)
         {
+            if (lockedTarget ==
+                currentTarget)
+            {
+                lockedTarget = null;
+            }
+
             currentTarget = null;
-            currentState = CompanionState.Following;
+
+            currentState =
+                CompanionState.Following;
+
             StopMoving();
 
             return;
@@ -269,32 +457,39 @@ public class CompanionController : MonoBehaviour
             return;
         }
 
-        float distance = HorizontalDistance(
-            transform.position,
-            currentTarget.position
-        );
+        float distance =
+            HorizontalDistance(
+                transform.position,
+                currentTarget.position
+            );
 
-        // 攻撃範囲から出た
-        if (distance > robotData.AttackRange)
+        if (distance >
+            robotData.AttackRange)
         {
-            currentState = CompanionState.Chasing;
+            currentState =
+                CompanionState.Chasing;
+
             return;
         }
 
         StopMoving();
     }
 
-    private void MoveTowards(Vector3 targetPosition)
+    // 移動
+    private void MoveTowards(
+        Vector3 targetPosition)
     {
         if (robotData == null)
             return;
 
-        Vector3 direction = targetPosition - transform.position;
+        Vector3 direction =
+            targetPosition -
+            transform.position;
 
-        // 水平方向への移動
         direction.y = 0f;
 
-        if (direction.sqrMagnitude <= 0.01f)
+        if (direction.sqrMagnitude <=
+            0.01f)
         {
             StopMoving();
             return;
@@ -302,29 +497,39 @@ public class CompanionController : MonoBehaviour
 
         direction.Normalize();
 
-        Vector3 velocity = direction * robotData.MoveSpeed;
+        Vector3 velocity =
+            direction *
+            robotData.MoveSpeed;
 
         if (isFlying)
         {
-            // 高度を維持するための上下移動
-            float heightDifference = hoverY - rb.position.y;
+            float heightDifference =
+                hoverY -
+                rb.position.y;
 
-            velocity.y = Mathf.Clamp(
-                heightDifference * 2f,
-                -robotData.MoveSpeed,
-                robotData.MoveSpeed
-            );
+            velocity.y =
+                Mathf.Clamp(
+                    heightDifference * 2f,
+                    -robotData.MoveSpeed,
+                    robotData.MoveSpeed
+                );
         }
         else
         {
-            velocity.y = rb.linearVelocity.y;
+            velocity.y =
+                rb.linearVelocity.y;
         }
 
-        rb.linearVelocity = velocity;
+        rb.linearVelocity =
+            velocity;
 
-        transform.rotation = Quaternion.LookRotation(direction);
+        transform.rotation =
+            Quaternion.LookRotation(
+                direction
+            );
     }
 
+    // 停止
     private void StopMoving()
     {
         if (rb == null)
@@ -336,9 +541,11 @@ public class CompanionController : MonoBehaviour
         velocity.x = 0.0f;
         velocity.z = 0.0f;
 
-        rb.linearVelocity = velocity;
+        rb.linearVelocity =
+            velocity;
     }
 
+    // ワープ
     private void WarpToPlayer()
     {
         if (player == null)
@@ -346,16 +553,29 @@ public class CompanionController : MonoBehaviour
 
         Vector3 position =
             player.position -
-            player.forward * followDistance;
+            player.forward *
+            followDistance;
 
-        position.y =
-            transform.position.y;
+        if (isFlying)
+        {
+            hoverY =
+                player.position.y +
+                hoverHeight;
+
+            position.y = hoverY;
+        }
+        else
+        {
+            position.y =
+                transform.position.y;
+        }
 
         rb.position = position;
 
         StopMoving();
     }
 
+    // 現在のターゲット
     public Transform GetCurrentTarget()
     {
         return currentTarget;
@@ -370,7 +590,22 @@ public class CompanionController : MonoBehaviour
     {
         currentTarget = null;
 
-        if (isDeployed)
+        // ロックオン中なら次のUpdateで
+        // ロックオン対象へ戻る
+        if (lockedTarget != null)
+        {
+            currentState =
+                CompanionState.Chasing;
+
+            return;
+        }
+
+        if (isFrozenPrevious)
+        {
+            currentState =
+                CompanionState.Frozen;
+        }
+        else if (isDeployed)
         {
             currentState =
                 CompanionState.Following;
@@ -382,25 +617,35 @@ public class CompanionController : MonoBehaviour
         }
     }
 
+    // 飛行高度維持
     private void MaintainHover()
     {
-        if (rb == null)
+        if (rb == null ||
+            robotData == null)
             return;
 
-        float heightDifference = hoverY - rb.position.y;
+        float heightDifference =
+            hoverY -
+            rb.position.y;
 
-        Vector3 velocity = rb.linearVelocity;
+        Vector3 velocity =
+            rb.linearVelocity;
 
-        velocity.y = Mathf.Clamp(
-            heightDifference * 2f,
-            -robotData.MoveSpeed,
-            robotData.MoveSpeed
-        );
+        velocity.y =
+            Mathf.Clamp(
+                heightDifference * 2f,
+                -robotData.MoveSpeed,
+                robotData.MoveSpeed
+            );
 
-        rb.linearVelocity = velocity;
+        rb.linearVelocity =
+            velocity;
     }
 
-    private float HorizontalDistance(Vector3 a, Vector3 b)
+    // 水平距離
+    private float HorizontalDistance(
+        Vector3 a,
+        Vector3 b)
     {
         a.y = 0f;
         b.y = 0f;
@@ -410,7 +655,8 @@ public class CompanionController : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.yellow;
+        Gizmos.color =
+            Color.yellow;
 
         Gizmos.DrawWireSphere(
             transform.position,

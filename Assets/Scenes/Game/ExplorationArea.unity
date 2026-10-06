@@ -1196,6 +1196,7 @@ MonoBehaviour:
   minEnemyCount: 1
   maxEnemyCount: 3
   respawnSeconds: 30
+  detectionRadius: 4
 --- !u!4 &504572025
 Transform:
   m_ObjectHideFlags: 0
@@ -1974,6 +1975,7 @@ MonoBehaviour:
   minEnemyCount: 1
   maxEnemyCount: 3
   respawnSeconds: 30
+  detectionRadius: 4
 --- !u!4 &716458929
 Transform:
   m_ObjectHideFlags: 0
@@ -2099,6 +2101,7 @@ MonoBehaviour:
   minEnemyCount: 1
   maxEnemyCount: 3
   respawnSeconds: 30
+  detectionRadius: 4
 --- !u!1 &741853071
 GameObject:
   m_ObjectHideFlags: 0
@@ -2286,6 +2289,7 @@ MonoBehaviour:
   minEnemyCount: 1
   maxEnemyCount: 3
   respawnSeconds: 30
+  detectionRadius: 4
 --- !u!1 &895737553
 GameObject:
   m_ObjectHideFlags: 0
@@ -2343,6 +2347,7 @@ MonoBehaviour:
   minEnemyCount: 1
   maxEnemyCount: 3
   respawnSeconds: 30
+  detectionRadius: 4
 --- !u!1 &945829298
 GameObject:
   m_ObjectHideFlags: 0
@@ -3135,6 +3140,7 @@ MonoBehaviour:
   minEnemyCount: 1
   maxEnemyCount: 3
   respawnSeconds: 30
+  detectionRadius: 4
 --- !u!4 &1390271606
 Transform:
   m_ObjectHideFlags: 0
@@ -3246,6 +3252,7 @@ GameObject:
   - component: {fileID: 1398152007}
   - component: {fileID: 1398152006}
   - component: {fileID: 1398152011}
+  - component: {fileID: 1398152012}
   m_Layer: 5
   m_Name: HUD_Canvas
   m_TagString: Untagged
@@ -3349,6 +3356,7 @@ RectTransform:
   m_Children:
   - {fileID: 1395143072}
   - {fileID: 1650700271}
+  - {fileID: 1911979726}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3375,6 +3383,21 @@ MonoBehaviour:
   levelText: {fileID: 394028197}
   expSlider: {fileID: 2128863685}
   expText: {fileID: 1614271904}
+--- !u!114 &1398152012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1398152005}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d32dce1eda057b146b0381a01fc45fe4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LockOnCursorUI
+  cursor: {fileID: 1911979726}
+  targetCamera: {fileID: 1220791418}
+  worldOffset: {x: 0, y: 1, z: 0}
 --- !u!1 &1406327795
 GameObject:
   m_ObjectHideFlags: 0
@@ -3605,6 +3628,7 @@ MonoBehaviour:
   minEnemyCount: 1
   maxEnemyCount: 3
   respawnSeconds: 30
+  detectionRadius: 4
 --- !u!1 &1513498670
 GameObject:
   m_ObjectHideFlags: 0
@@ -3841,6 +3865,7 @@ GameObject:
   - component: {fileID: 1598887030}
   - component: {fileID: 1598887029}
   - component: {fileID: 1598887032}
+  - component: {fileID: 1598887033}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -4034,6 +4059,22 @@ MonoBehaviour:
   level: 1
   experience: 0
   levelData: {fileID: 11400000, guid: 2551d3d76b39233438e1203039db6411, type: 2}
+--- !u!114 &1598887033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1598887022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e21fb4a90ec6d4f479c73c94e76b7a37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LockonManager
+  lockOnRadius: 20
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 8
 --- !u!1 &1614271903
 GameObject:
   m_ObjectHideFlags: 0
@@ -4477,6 +4518,7 @@ MonoBehaviour:
   minEnemyCount: 1
   maxEnemyCount: 3
   respawnSeconds: 30
+  detectionRadius: 4
 --- !u!1 &1780962246
 GameObject:
   m_ObjectHideFlags: 0
@@ -4678,6 +4720,7 @@ MonoBehaviour:
   minEnemyCount: 1
   maxEnemyCount: 3
   respawnSeconds: 30
+  detectionRadius: 4
 --- !u!1 &1906222248
 GameObject:
   m_ObjectHideFlags: 0
@@ -4722,6 +4765,81 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1911979725
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1911979726}
+  - component: {fileID: 1911979728}
+  - component: {fileID: 1911979727}
+  m_Layer: 5
+  m_Name: LockOnCursor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1911979726
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1911979725}
+  m_LocalRotation: {x: 0, y: 0, z: 1, w: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 1398152010}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 180}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 25, y: 25}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1911979727
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1911979725}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: fdabff4ee4d7bc147933f75315d8e71c, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1911979728
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1911979725}
+  m_CullTransparentMesh: 1
 --- !u!1 &1925788861
 GameObject:
   m_ObjectHideFlags: 0
