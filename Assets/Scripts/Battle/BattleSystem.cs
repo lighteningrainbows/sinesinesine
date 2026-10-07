@@ -2,7 +2,15 @@ using UnityEngine;
 
 public class BattleSystem : MonoBehaviour
 {
-    public static BattleSystem Instance { get; private set; }
+    public static BattleSystem Instance
+    {
+        get;
+        private set;
+    }
+
+    [Header("ダメージ倍率設定")]
+    [SerializeField]
+    private DamageMultiplierSettings damageMultiplierSettings;
 
     private void Awake()
     {
@@ -16,6 +24,10 @@ public class BattleSystem : MonoBehaviour
         Instance = this;
     }
 
+    // =========================================================
+    // 攻撃
+    // =========================================================
+
     public void Attack(
         GameObject attacker,
         GameObject target,
@@ -28,8 +40,19 @@ public class BattleSystem : MonoBehaviour
         if (target == null)
             return;
 
+        // =====================================================
+        // ダメージを受けるComponentを取得
+        // =====================================================
+
         IDamageable damageable =
             target.GetComponent<IDamageable>();
+
+        if (damageable == null)
+        {
+            // Colliderが子オブジェクトの場合にも対応
+            damageable =
+                target.GetComponentInParent<IDamageable>();
+        }
 
         if (damageable == null)
         {
@@ -40,11 +63,27 @@ public class BattleSystem : MonoBehaviour
             return;
         }
 
+        // =====================================================
+        // 実際にダメージを受けるGameObject
+        // =====================================================
+
+        Component damageableComponent =
+            damageable as Component;
+
+        GameObject actualTarget =
+            damageableComponent != null
+                ? damageableComponent.gameObject
+                : target;
+
+        // =====================================================
+        // 防御側属性取得
+        // =====================================================
+
         TypeData targetType1 = null;
         TypeData targetType2 = null;
 
         EnemyHealth enemyHealth =
-            target.GetComponent<EnemyHealth>();
+            actualTarget.GetComponent<EnemyHealth>();
 
         if (enemyHealth != null &&
             enemyHealth.EnemyData != null)
@@ -57,7 +96,7 @@ public class BattleSystem : MonoBehaviour
         }
 
         CompanionController companion =
-            target.GetComponent<CompanionController>();
+            actualTarget.GetComponent<CompanionController>();
 
         if (companion != null &&
             companion.RobotData != null)
@@ -70,14 +109,18 @@ public class BattleSystem : MonoBehaviour
         }
 
         PlayerHealth playerHealth =
-            target.GetComponent<PlayerHealth>();
+            actualTarget.GetComponent<PlayerHealth>();
 
-        // 現在の設計ではPlayerはタイプを持たない
+        // 現在Playerは属性なし
         if (playerHealth != null)
         {
             targetType1 = null;
             targetType2 = null;
         }
+
+        // =====================================================
+        // 属性相性
+        // =====================================================
 
         TypeRelation relation =
             CalculateRelation(
@@ -86,20 +129,67 @@ public class BattleSystem : MonoBehaviour
                 targetType2
             );
 
+        // =====================================================
+        // 攻撃側が味方か敵か
+        // =====================================================
+
+        DamageCalculator.AttackerSide attackerSide =
+            GetAttackerSide(attacker);
+
+        // =====================================================
+        // 最終ダメージ
+        // =====================================================
+
         int finalDamage =
             DamageCalculator.CalculateDamage(
                 baseDamage,
-                relation
+                relation,
+                attackerSide,
+                damageMultiplierSettings
             );
 
         Debug.Log(
-            $"{attacker.name} → {target.name} / " +
+            $"{attacker.name} → {actualTarget.name} / " +
+            $"Side = {attackerSide} / " +
             $"Relation = {relation} / " +
+            $"BaseDamage = {baseDamage} / " +
             $"Damage = {finalDamage}"
         );
 
-        damageable.TakeDamage(finalDamage);
+        damageable.TakeDamage(
+            finalDamage
+        );
     }
+
+    // =========================================================
+    // 攻撃側判定
+    // =========================================================
+
+    private DamageCalculator.AttackerSide
+        GetAttackerSide(GameObject attacker)
+    {
+        // EnemyControllerを持っていたら敵
+        EnemyController enemy =
+            attacker.GetComponent<EnemyController>();
+
+        if (enemy == null)
+        {
+            enemy =
+                attacker.GetComponentInParent<EnemyController>();
+        }
+
+        if (enemy != null)
+        {
+            return DamageCalculator.AttackerSide.Enemy;
+        }
+
+        // それ以外はPlayer・Companion側
+        return DamageCalculator.AttackerSide.Ally;
+    }
+
+    // =========================================================
+    // 属性相性計算
+    // =========================================================
 
     private TypeRelation CalculateRelation(
         TypeData attackType,
@@ -116,7 +206,9 @@ public class BattleSystem : MonoBehaviour
         }
 
         if (attackType == null)
+        {
             return TypeRelation.Normal;
+        }
 
         TypeRelation relation1 =
             TypeChart.Instance.GetRelation(
@@ -124,8 +216,11 @@ public class BattleSystem : MonoBehaviour
                 targetType1
             );
 
+        // 属性が1つだけ
         if (targetType2 == null)
+        {
             return relation1;
+        }
 
         TypeRelation relation2 =
             TypeChart.Instance.GetRelation(
