@@ -15,6 +15,6 @@ MonoBehaviour:
   allyAdvantage: 1.5
   allyNormal: 0.25
   allyDisadvantage: 0
-  enemyAdvantage: 1.5
+  enemyAdvantage: 1
   enemyNormal: 1
-  enemyDisadvantage: 0.5
+  enemyDisadvantage: 1
