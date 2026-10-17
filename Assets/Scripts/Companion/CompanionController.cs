@@ -66,6 +66,8 @@ public class CompanionController : MonoBehaviour
         // 前回の味方として固定中
         if (isFrozenPrevious)
         {
+            var knockback = GetComponent<FrozenCompanionKnockback>();
+            if (knockback != null && knockback.IsActive) return;
             StopMoving();
             return;
         }
@@ -134,6 +136,8 @@ public class CompanionController : MonoBehaviour
     // 出撃
     public void Deploy()
     {
+        var knockback = GetComponent<FrozenCompanionKnockback>();
+        if (knockback != null) knockback.Cancel();
         if (player == null)
         {
             Debug.LogWarning(
@@ -190,6 +194,8 @@ public class CompanionController : MonoBehaviour
     // 通常待機
     public void Standby()
     {
+        var knockback = GetComponent<FrozenCompanionKnockback>();
+        if (knockback != null) knockback.Cancel();
         isDeployed = false;
         isFrozenPrevious = false;
 
@@ -212,6 +218,8 @@ public class CompanionController : MonoBehaviour
     // 交代前の味方をその場に固定
     public void FreezeAsPreviousCompanion()
     {
+        var knockback = GetComponent<FrozenCompanionKnockback>();
+        if (knockback != null) knockback.Cancel();
         isDeployed = false;
         isFrozenPrevious = true;
 
@@ -239,6 +247,8 @@ public class CompanionController : MonoBehaviour
     // 固定状態解除
     public void ReleaseFrozenState()
     {
+        var knockback = GetComponent<FrozenCompanionKnockback>();
+        if (knockback != null) knockback.Cancel();
         isFrozenPrevious = false;
 
         rb.isKinematic = false;
@@ -408,9 +418,9 @@ public class CompanionController : MonoBehaviour
         }
 
         float distance =
-            HorizontalDistance(
+            CombatGeometry.HorizontalDistanceToTarget(
                 transform.position,
-                currentTarget.position
+                currentTarget
             );
 
         if (distance <=
@@ -458,9 +468,9 @@ public class CompanionController : MonoBehaviour
         }
 
         float distance =
-            HorizontalDistance(
+            CombatGeometry.HorizontalDistanceToTarget(
                 transform.position,
-                currentTarget.position
+                currentTarget
             );
 
         if (distance >
@@ -532,7 +542,7 @@ public class CompanionController : MonoBehaviour
     // 停止
     private void StopMoving()
     {
-        if (rb == null)
+        if (rb == null || rb.isKinematic)
             return;
 
         Vector3 velocity =

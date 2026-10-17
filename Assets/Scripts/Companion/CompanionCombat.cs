@@ -62,9 +62,9 @@ public class CompanionCombat : MonoBehaviour
         }
 
         float distance =
-            HorizontalDistance(
+            CombatGeometry.HorizontalDistanceToTarget(
                 transform.position,
-                target.position
+                target
             );
 
         if (distance > runtimeStats.AttackRange)
