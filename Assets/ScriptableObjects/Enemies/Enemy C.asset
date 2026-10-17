@@ -15,9 +15,12 @@ MonoBehaviour:
   enemyName: C
   type1: {fileID: 11400000, guid: fcd5f1efe05f37148a40c5bd8d0c96b4, type: 2}
   type2: {fileID: 0}
-  maxHP: 100
+  maxHP: 200
   attack: 10
-  moveSpeed: 3
-  attackInterval: 1.5
+  moveSpeed: 1.5
+  attackInterval: 3
   attackRange: 1.5
+  attackDuration: 1
+  attackArea: {x: 1.5, y: 1.5}
+  attackHeight: 4
   experience: 100

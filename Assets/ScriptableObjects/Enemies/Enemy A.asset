@@ -18,6 +18,9 @@ MonoBehaviour:
   maxHP: 100
   attack: 10
   moveSpeed: 3
-  attackInterval: 1.5
-  attackRange: 1.5
+  attackInterval: 2
+  attackRange: 2
+  attackDuration: 0.5
+  attackArea: {x: 2, y: 2}
+  attackHeight: 4
   experience: 100

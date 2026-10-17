@@ -5,622 +5,330 @@ public class EnemyController : MonoBehaviour
 {
     public enum EnemyState
     {
-        Waiting,
-        Chasing,
-        Attacking
+        Waiting, Chasing, Attacking, Returning,
+        Knockback, AirPause, Falling, Recovering, Defeated
     }
 
-    [Header("敵データ")]
     [SerializeField] private EnemyData enemyData;
-
-    [Header("飛行設定")]
-    [SerializeField] private bool isFlying = false;
-    [SerializeField] private float hoverHeight = 2.5f;
-
-    private float hoverY;
-
-    [Header("ターゲット設定")]
+    [SerializeField] private bool isFlying;
+    [SerializeField] private float hoverHeight = 1.5f;
     [SerializeField] private float targetSearchInterval = 0.2f;
+    [SerializeField] private float returnDistance = 8f;
 
-    [Header("帰還設定")]
-    [SerializeField] private float returnDistance = 8.0f;
+    [Header("Alpha hit reaction")]
+    [SerializeField, Min(0f)] private float knockbackDistance = 0.3f;
+    [SerializeField, Min(0.01f)] private float knockbackDuration = 0.15f;
+    [SerializeField, Min(0f)] private float knockbackHeight = 0.1f;
+    [SerializeField, Min(0f)] private float airPauseDuration = 0.2f;
+    [SerializeField, Min(0f)] private float recoveryDuration = 1f;
 
     private Rigidbody rb;
-
-    private EnemyState currentState;
-
-    private Transform currentTarget;
-
-    private Vector3 waitingPosition;
-
-    private float targetSearchTimer;
-
-    // 所属している敵集団
+    private EnemyCombat combat;
+    private EnemyHealth health;
+    private Collider bodyCollider;
     private EnemySpawnGroup spawnGroup;
-
-    // 敵集団からプレイヤーを感知しているか
+    private BossEncounter bossEncounter;
+    private EnemyState currentState;
+    private Transform currentTarget;
+    private Vector3 waitingPosition;
+    private Vector3 knockbackDirection;
+    private float hoverY;
+    private float targetSearchTimer;
+    private float reactionTimer;
     private bool hasDetectedPlayer;
+    private CombatKnockback? comboKnockback;
+    private readonly RaycastHit[] groundHits = new RaycastHit[16];
 
     public EnemyState CurrentState => currentState;
-
     public Transform CurrentTarget => currentTarget;
-
     public Vector3 WaitingPosition => waitingPosition;
+    public bool IsFlying => isFlying;
+    public bool IsStaggered => currentState >= EnemyState.Knockback &&
+                               currentState <= EnemyState.Recovering;
+    public bool CanAct => !IsStaggered && currentState != EnemyState.Defeated &&
+                          (health == null || health.CurrentHP > 0);
+    public bool CanAttack => CanAct && hasDetectedPlayer &&
+                             currentState == EnemyState.Attacking;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
-
-        if (isFlying)
-        {
-            rb.useGravity = false;
-        }
-
-        currentState = EnemyState.Waiting;
+        combat = GetComponent<EnemyCombat>();
+        health = GetComponent<EnemyHealth>();
+        bodyCollider = GetComponent<Collider>();
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        // 最初の位置を帰還先として保存
         waitingPosition = transform.position;
-
-        if (isFlying)
-        {
-            hoverY =
-                waitingPosition.y + hoverHeight;
-
-            Vector3 position =
-                transform.position;
-
-            position.y = hoverY;
-
-            rb.position = position;
-        }
+        hoverY = waitingPosition.y + hoverHeight;
+        currentState = EnemyState.Waiting;
+        currentTarget = null;
+        hasDetectedPlayer = false;
+        targetSearchTimer = 0f;
+        rb.useGravity = !isFlying;
+        rb.linearVelocity = Vector3.zero;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
-        if (enemyData == null)
+        if (enemyData == null || currentState == EnemyState.Defeated)
             return;
-
-        if (isFlying)
+        if (IsStaggered)
         {
-            MaintainHover();
+            UpdateHitReaction();
+            return;
         }
+        if (!CanAct) return;
+        if (isFlying) MaintainHover();
 
-        // まだ集団から感知されていない
-        if (!hasDetectedPlayer)
+        // Finish returning before acquiring another target, avoiding leash oscillation.
+        if (!hasDetectedPlayer || currentState == EnemyState.Returning ||
+            HorizontalDistance(rb.position, waitingPosition) > returnDistance)
         {
+            currentState = EnemyState.Returning;
             currentTarget = null;
-            currentState = EnemyState.Waiting;
-
-            UpdateWaiting();
-
+            if (combat != null) combat.CancelAttack();
+            ReturnHome();
             return;
         }
 
-        // =====================================================
-        // 帰還距離チェック
-        // =====================================================
-
-        float distanceFromHome =
-            HorizontalDistance(
-                transform.position,
-                waitingPosition
-            );
-
-        if (distanceFromHome > returnDistance)
+        targetSearchTimer -= Time.fixedDeltaTime;
+        if (!IsTargetAvailable(currentTarget) || targetSearchTimer <= 0f)
         {
-            ReturnToWaitingPosition();
-
+            targetSearchTimer = targetSearchInterval;
+            if (!IsTargetAvailable(currentTarget)) currentTarget = ChooseTarget();
+        }
+        if (currentTarget == null)
+        {
+            currentState = EnemyState.Returning;
+            if (combat != null) combat.CancelAttack();
+            ReturnHome();
             return;
         }
 
-        // =====================================================
-        // ターゲット更新
-        // =====================================================
-
-        targetSearchTimer -= Time.deltaTime;
-
-        if (targetSearchTimer <= 0.0f)
+        // An attack commits its facing; targets can dodge during its wind-up.
+        if (combat != null && combat.IsAttacking)
         {
-            targetSearchTimer =
-                targetSearchInterval;
-
-            UpdateTarget();
+            currentState = EnemyState.Attacking;
+            StopMoving();
+            return;
         }
-
-        // =====================================================
-        // 状態更新
-        // =====================================================
-
-        switch (currentState)
+        FaceTarget(currentTarget.position);
+        if (combat != null && combat.IsTargetInRange(currentTarget))
         {
-            case EnemyState.Waiting:
-                UpdateWaiting();
-                break;
-
-            case EnemyState.Chasing:
-                UpdateChasing();
-                break;
-
-            case EnemyState.Attacking:
-                UpdateAttacking();
-                break;
+            currentState = EnemyState.Attacking;
+            StopMoving();
+        }
+        else
+        {
+            currentState = EnemyState.Chasing;
+            MoveTowards(currentTarget.position);
         }
     }
 
-    // =========================================================
-    // 敵集団
-    // =========================================================
+    public void SetSpawnGroup(EnemySpawnGroup group) => spawnGroup = group;
+    public void SetBossEncounter(BossEncounter encounter) => bossEncounter = encounter;
 
-    public void SetSpawnGroup(
-        EnemySpawnGroup group)
-    {
-        spawnGroup = group;
-    }
-
-    /// <summary>
-    /// 敵集団からプレイヤー感知を開始する
-    /// </summary>
     public void DetectPlayer()
     {
         hasDetectedPlayer = true;
-
-        targetSearchTimer = 0.0f;
-
-        UpdateTarget();
+        targetSearchTimer = 0f;
     }
 
-    /// <summary>
-    /// 敵集団からプレイヤーが範囲外に出た
-    /// </summary>
     public void LosePlayerDetection()
     {
         hasDetectedPlayer = false;
-
         currentTarget = null;
-
-        currentState =
-            EnemyState.Waiting;
-
-        StopMoving();
+        if (combat != null) combat.CancelAttack();
+        if (CanAct) currentState = EnemyState.Returning;
     }
 
-    // =========================================================
-    // ターゲット
-    // =========================================================
-
-    private void UpdateTarget()
+    public static bool IsLivingTarget(Transform target)
     {
-        if (!hasDetectedPlayer)
+        if (target == null || !target.gameObject.activeInHierarchy) return false;
+        IDamageable damageable = target.GetComponentInParent<IDamageable>();
+        if (damageable == null || damageable.CurrentHP <= 0) return false;
+        CompanionController companion = target.GetComponentInParent<CompanionController>();
+        return companion == null || (companion.IsDeployed && !companion.IsFrozenPrevious);
+    }
+
+    public bool IsTargetAvailable(Transform target)
+    {
+        return IsLivingTarget(target) &&
+               (spawnGroup == null || spawnGroup.ContainsTarget(target)) &&
+               (bossEncounter == null || bossEncounter.ContainsTarget(target));
+    }
+
+    private Transform ChooseTarget()
+    {
+        Transform player = bossEncounter != null ? bossEncounter.Player :
+            spawnGroup != null ? spawnGroup.Player : null;
+        if (player == null)
         {
-            currentTarget = null;
+            GameObject found = GameObject.FindGameObjectWithTag("Player");
+            if (found != null) player = found.transform;
+        }
+        CompanionController companion = CompanionManager.Instance != null
+            ? CompanionManager.Instance.ActiveCompanion : null;
+        Transform ally = companion != null ? companion.transform : null;
+        bool playerValid = IsTargetAvailable(player);
+        bool allyValid = IsTargetAvailable(ally);
+        if (playerValid && allyValid) return Random.Range(0, 2) == 0 ? player : ally;
+        return playerValid ? player : allyValid ? ally : null;
+    }
+
+    public void ReceiveHit(Vector3 attackerPosition, CombatKnockback? knockback = null)
+    {
+        if (currentState == EnemyState.Defeated ||
+            (health != null && health.CurrentHP <= 0)) return;
+        if (combat != null) combat.CancelAttack();
+        comboKnockback = knockback;
+        knockbackDirection = rb.position - attackerPosition;
+        knockbackDirection.y = 0f;
+        knockbackDirection = knockbackDirection.sqrMagnitude > 0.0001f
+            ? knockbackDirection.normalized : -transform.forward;
+        // Follow-ups during AirPause restart the complete reaction.
+        currentState = EnemyState.Knockback;
+        reactionTimer = 0f;
+        rb.useGravity = false;
+        rb.linearVelocity = Vector3.zero;
+    }
+
+    private void UpdateHitReaction()
+    {
+        float dt = Time.fixedDeltaTime;
+        switch (currentState)
+        {
+            case EnemyState.Knockback:
+                float duration = comboKnockback.HasValue ? comboKnockback.Value.Duration : knockbackDuration;
+                if (reactionTimer >= duration)
+                {
+                    BeginReactionPhase(EnemyState.AirPause);
+                    return;
+                }
+                float step = Mathf.Min(dt, duration - reactionTimer);
+                if (comboKnockback.HasValue)
+                {
+                    CombatKnockback profile = comboKnockback.Value;
+                    rb.linearVelocity = (profile.Offset(reactionTimer + step, knockbackDirection) -
+                        profile.Offset(reactionTimer, knockbackDirection)) / dt;
+                }
+                else rb.linearVelocity = (knockbackDirection * knockbackDistance +
+                    Vector3.up * knockbackHeight) / duration * (step / dt);
+                reactionTimer += step;
+                break;
+            case EnemyState.AirPause:
+                rb.linearVelocity = Vector3.zero;
+                reactionTimer += dt;
+                if (reactionTimer >= (comboKnockback.HasValue ? comboKnockback.Value.Pause : airPauseDuration))
+                {
+                    BeginReactionPhase(EnemyState.Falling);
+                    rb.useGravity = true;
+                }
+                break;
+            case EnemyState.Falling:
+                StopMoving();
+                if (rb.linearVelocity.y <= 0f && IsGrounded())
+                    BeginReactionPhase(EnemyState.Recovering);
+                break;
+            case EnemyState.Recovering:
+                StopMoving();
+                reactionTimer += dt;
+                if (reactionTimer >= recoveryDuration)
+                {
+                    rb.useGravity = !isFlying;
+                    currentState = EnemyState.Waiting;
+                    targetSearchTimer = 0f;
+                }
+                break;
+        }
+    }
+
+    private void BeginReactionPhase(EnemyState state)
+    {
+        currentState = state;
+        reactionTimer = 0f;
+        rb.linearVelocity = Vector3.zero;
+    }
+
+    private bool IsGrounded()
+    {
+        if (bodyCollider == null) return false;
+        Bounds bounds = bodyCollider.bounds;
+        int count = Physics.RaycastNonAlloc(bounds.center, Vector3.down, groundHits,
+            bounds.extents.y + 0.04f, ~LayerMask.GetMask("Enemy", "Player", "Companion"),
+            QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < count; i++)
+            if (groundHits[i].normal.y > 0.5f) return true;
+        return false;
+    }
+
+    private void ReturnHome()
+    {
+        if (HorizontalDistance(rb.position, waitingPosition) <= 0.1f)
+        {
+            StopMoving();
             currentState = EnemyState.Waiting;
-
             return;
         }
-
-        // 現在のターゲットがまだ有効ならそのまま
-        if (currentTarget != null)
-        {
-            if (currentTarget.gameObject.activeInHierarchy)
-            {
-                return;
-            }
-
-            currentTarget = null;
-        }
-
-        Transform playerTarget =
-            FindPlayer();
-
-        Transform companionTarget =
-            FindCompanion();
-
-        // どちらもいない
-        if (playerTarget == null &&
-            companionTarget == null)
-        {
-            currentTarget = null;
-
-            currentState =
-                EnemyState.Waiting;
-
-            return;
-        }
-
-        // プレイヤーだけ
-        if (playerTarget != null &&
-            companionTarget == null)
-        {
-            currentTarget =
-                playerTarget;
-
-            currentState =
-                EnemyState.Chasing;
-
-            return;
-        }
-
-        // 仲間だけ
-        if (playerTarget == null &&
-            companionTarget != null)
-        {
-            currentTarget =
-                companionTarget;
-
-            currentState =
-                EnemyState.Chasing;
-
-            return;
-        }
-
-        // 両方いる場合は近い方
-        float playerDistance =
-            HorizontalDistance(
-                transform.position,
-                playerTarget.position
-            );
-
-        float companionDistance =
-            HorizontalDistance(
-                transform.position,
-                companionTarget.position
-            );
-
-        if (playerDistance <= companionDistance)
-        {
-            currentTarget =
-                playerTarget;
-        }
-        else
-        {
-            currentTarget =
-                companionTarget;
-        }
-
-        currentState =
-            EnemyState.Chasing;
+        MoveTowards(waitingPosition);
     }
 
-    private Transform FindPlayer()
+    private void MoveTowards(Vector3 targetPosition)
     {
-        GameObject playerObject =
-            GameObject.FindGameObjectWithTag("Player");
-
-        if (playerObject == null)
-            return null;
-
-        if (!playerObject.activeInHierarchy)
-            return null;
-
-        return playerObject.transform;
-    }
-
-    private Transform FindCompanion()
-    {
-        CompanionManager manager =
-            CompanionManager.Instance;
-
-        if (manager == null)
-            return null;
-
-        CompanionController companion =
-            manager.ActiveCompanion;
-
-        if (companion == null)
-            return null;
-
-        if (!companion.IsDeployed)
-            return null;
-
-        if (!companion.gameObject.activeInHierarchy)
-            return null;
-
-        return companion.transform;
-    }
-
-    // =========================================================
-    // 待機
-    // =========================================================
-
-    private void UpdateWaiting()
-    {
-        float distance =
-            HorizontalDistance(
-                transform.position,
-                waitingPosition
-            );
-
-        if (distance > 0.1f)
-        {
-            MoveTowards(waitingPosition);
-        }
-        else
-        {
-            StopMoving();
-        }
-    }
-
-    // =========================================================
-    // 追跡
-    // =========================================================
-
-    private void UpdateChasing()
-    {
-        if (!hasDetectedPlayer)
-        {
-            ReturnToWaitingPosition();
-
-            return;
-        }
-
-        if (currentTarget == null ||
-            !currentTarget.gameObject.activeInHierarchy)
-        {
-            currentTarget = null;
-
-            currentState =
-                EnemyState.Waiting;
-
-            StopMoving();
-
-            return;
-        }
-
-        float distance =
-            HorizontalDistance(
-                transform.position,
-                currentTarget.position
-            );
-
-        // 攻撃範囲に入った
-        if (distance <= enemyData.AttackRange)
-        {
-            currentState =
-                EnemyState.Attacking;
-
-            StopMoving();
-
-            return;
-        }
-
-        MoveTowards(
-            currentTarget.position
-        );
-    }
-
-    // =========================================================
-    // 攻撃
-    // =========================================================
-
-    private void UpdateAttacking()
-    {
-        if (!hasDetectedPlayer)
-        {
-            ReturnToWaitingPosition();
-
-            return;
-        }
-
-        if (currentTarget == null ||
-            !currentTarget.gameObject.activeInHierarchy)
-        {
-            currentTarget = null;
-
-            currentState =
-                EnemyState.Waiting;
-
-            StopMoving();
-
-            return;
-        }
-
-        float distance =
-            HorizontalDistance(
-                transform.position,
-                currentTarget.position
-            );
-
-        // 攻撃範囲から出た
-        if (distance > enemyData.AttackRange)
-        {
-            currentState =
-                EnemyState.Chasing;
-
-            return;
-        }
-
-        StopMoving();
-    }
-
-    // =========================================================
-    // 帰還
-    // =========================================================
-
-    private void ReturnToWaitingPosition()
-    {
-        currentTarget = null;
-
-        currentState =
-            EnemyState.Waiting;
-
-        MoveTowards(
-            waitingPosition
-        );
-
-        float distance =
-            HorizontalDistance(
-                transform.position,
-                waitingPosition
-            );
-
-        if (distance <= 0.2f)
-        {
-            StopMoving();
-
-            // 帰還完了
-            hasDetectedPlayer = false;
-
-            currentState =
-                EnemyState.Waiting;
-        }
-    }
-
-    // =========================================================
-    // 移動
-    // =========================================================
-
-    private void MoveTowards(
-        Vector3 targetPosition)
-    {
-        if (enemyData == null)
-            return;
-
-        Vector3 direction =
-            targetPosition -
-            transform.position;
-
-        // 水平方向だけで移動方向を決める
+        Vector3 direction = targetPosition - rb.position;
         direction.y = 0f;
-
-        if (direction.sqrMagnitude <= 0.01f)
-        {
-            StopMoving();
-
-            return;
-        }
-
-        direction.Normalize();
-
-        Vector3 velocity =
-            direction *
-            enemyData.MoveSpeed;
-
-        if (isFlying)
-        {
-            float heightDifference =
-                hoverY -
-                rb.position.y;
-
-            velocity.y =
-                Mathf.Clamp(
-                    heightDifference * 2f,
-                    -enemyData.MoveSpeed,
-                    enemyData.MoveSpeed
-                );
-        }
-        else
-        {
-            velocity.y =
-                rb.linearVelocity.y;
-        }
-
-        rb.linearVelocity =
-            velocity;
-
-        transform.rotation =
-            Quaternion.LookRotation(
-                direction
-            );
+        float distance = direction.magnitude;
+        Vector3 velocity = direction.normalized *
+            Mathf.Min(enemyData.MoveSpeed, distance / Time.fixedDeltaTime);
+        velocity.y = rb.linearVelocity.y;
+        rb.linearVelocity = velocity;
+        FaceTarget(targetPosition);
     }
 
-    // =========================================================
-    // 停止
-    // =========================================================
+    private void FaceTarget(Vector3 targetPosition)
+    {
+        Vector3 direction = targetPosition - rb.position;
+        direction.y = 0f;
+        if (direction.sqrMagnitude > 0.0001f)
+            transform.rotation = Quaternion.LookRotation(direction);
+    }
 
     private void StopMoving()
     {
-        if (rb == null)
-            return;
-
-        Vector3 velocity =
-            rb.linearVelocity;
-
-        velocity.x = 0.0f;
-        velocity.z = 0.0f;
-
-        if (!isFlying)
-        {
-            velocity.y =
-                rb.linearVelocity.y;
-        }
-
-        rb.linearVelocity =
-            velocity;
+        Vector3 velocity = rb.linearVelocity;
+        velocity.x = velocity.z = 0f;
+        rb.linearVelocity = velocity;
     }
 
-    // =========================================================
-    // ターゲット解除
-    // =========================================================
+    private void MaintainHover()
+    {
+        Vector3 velocity = rb.linearVelocity;
+        velocity.y = Mathf.Clamp((hoverY - rb.position.y) * 2f,
+            -enemyData.MoveSpeed, enemyData.MoveSpeed);
+        rb.linearVelocity = velocity;
+    }
 
     public void ClearTarget()
     {
         currentTarget = null;
-
-        currentState =
-            EnemyState.Waiting;
-
-        StopMoving();
+        if (combat != null) combat.CancelAttack();
+        if (CanAct) currentState = EnemyState.Waiting;
     }
 
-    // =========================================================
-    // 飛行
-    // =========================================================
-
-    private void MaintainHover()
+    public void Defeat()
     {
-        if (rb == null ||
-            enemyData == null)
-            return;
-
-        float heightDifference =
-            hoverY -
-            rb.position.y;
-
-        Vector3 velocity =
-            rb.linearVelocity;
-
-        velocity.y =
-            Mathf.Clamp(
-                heightDifference * 2f,
-                -enemyData.MoveSpeed,
-                enemyData.MoveSpeed
-            );
-
-        rb.linearVelocity =
-            velocity;
+        currentTarget = null;
+        hasDetectedPlayer = false;
+        currentState = EnemyState.Defeated;
+        if (combat != null) combat.CancelAttack();
+        rb.linearVelocity = Vector3.zero;
     }
 
-    // =========================================================
-    // 距離
-    // =========================================================
-
-    private float HorizontalDistance(
-        Vector3 a,
-        Vector3 b)
+    private static float HorizontalDistance(Vector3 a, Vector3 b)
     {
-        a.y = 0f;
-        b.y = 0f;
-
+        a.y = b.y = 0f;
         return Vector3.Distance(a, b);
-    }
-
-    // =========================================================
-    // デバッグ
-    // =========================================================
-
-    private void OnDrawGizmosSelected()
-    {
-        if (enemyData == null)
-            return;
-
-        Gizmos.color = Color.red;
-
-        Gizmos.DrawWireSphere(
-            transform.position,
-            enemyData.AttackRange
-        );
     }
 }

@@ -56,6 +56,19 @@ public class ExperienceManager : MonoBehaviour
             return;
         }
 
+        // Boss rewards go to every owned robot, including inactive/defeated ones.
+        if (enemyData.IsBoss)
+        {
+            for (int i = 0; i < companionManager.GetCompanionCount(); i++)
+            {
+                CompanionController companion = companionManager.GetCompanion(i);
+                if (companion == null) continue;
+                ExperienceComponent experience = companion.GetComponent<ExperienceComponent>();
+                if (experience != null) experience.AddExperience(baseExperience);
+            }
+            return;
+        }
+
         GiveExperienceForType(enemyData.Type1, baseExperience);
         GiveExperienceForType(enemyData.Type2, baseExperience);
     }

@@ -338,7 +338,7 @@ MonoBehaviour:
     relation: 1
   - attackType: {fileID: 11400000, guid: fcd5f1efe05f37148a40c5bd8d0c96b4, type: 2}
     defenseType: {fileID: 11400000, guid: fe40331d1b5766a41b27e8ea8fe85dd0, type: 2}
-    relation: 0
+    relation: 1
   - attackType: {fileID: 11400000, guid: fe40331d1b5766a41b27e8ea8fe85dd0, type: 2}
     defenseType: {fileID: 11400000, guid: fcd5f1efe05f37148a40c5bd8d0c96b4, type: 2}
     relation: 2
@@ -1224,7 +1224,7 @@ GameObject:
   - component: {fileID: 1598887031}
   - component: {fileID: 1598887030}
   - component: {fileID: 1598887029}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}

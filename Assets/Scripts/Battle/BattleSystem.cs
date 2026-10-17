@@ -8,7 +8,7 @@ public class BattleSystem : MonoBehaviour
         private set;
     }
 
-    [Header("ƒ_ƒ[ƒW”{—¦İ’è")]
+    [Header("ãƒ€ãƒ¡ãƒ¼ã‚¸å€ç‡è¨­å®š")]
     [SerializeField]
     private DamageMultiplierSettings damageMultiplierSettings;
 
@@ -25,14 +25,15 @@ public class BattleSystem : MonoBehaviour
     }
 
     // =========================================================
-    // UŒ‚
+    // æ”»æ’ƒ
     // =========================================================
 
     public void Attack(
         GameObject attacker,
         GameObject target,
         int baseDamage,
-        TypeData attackType)
+        TypeData attackType,
+        CombatKnockback? knockback = null)
     {
         if (attacker == null)
             return;
@@ -41,7 +42,7 @@ public class BattleSystem : MonoBehaviour
             return;
 
         // =====================================================
-        // ƒ_ƒ[ƒW‚ğó‚¯‚éComponent‚ğæ“¾
+        // ãƒ€ãƒ¡ãƒ¼ã‚¸ã‚’å—ã‘ã‚‹Componentã‚’å–å¾—
         // =====================================================
 
         IDamageable damageable =
@@ -49,7 +50,7 @@ public class BattleSystem : MonoBehaviour
 
         if (damageable == null)
         {
-            // Collider‚ªqƒIƒuƒWƒFƒNƒg‚Ìê‡‚É‚à‘Î‰
+            // ColliderãŒå­ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®å ´åˆã«ã‚‚å¯¾å¿œ
             damageable =
                 target.GetComponentInParent<IDamageable>();
         }
@@ -57,14 +58,14 @@ public class BattleSystem : MonoBehaviour
         if (damageable == null)
         {
             Debug.LogWarning(
-                $"{target.name} ‚Íƒ_ƒ[ƒW‚ğó‚¯‚ç‚ê‚Ü‚¹‚ñB"
+                $"{target.name} ã¯ãƒ€ãƒ¡ãƒ¼ã‚¸ã‚’å—ã‘ã‚‰ã‚Œã¾ã›ã‚“ã€‚"
             );
 
             return;
         }
 
         // =====================================================
-        // ÀÛ‚Éƒ_ƒ[ƒW‚ğó‚¯‚éGameObject
+        // å®Ÿéš›ã«ãƒ€ãƒ¡ãƒ¼ã‚¸ã‚’å—ã‘ã‚‹GameObject
         // =====================================================
 
         Component damageableComponent =
@@ -76,7 +77,7 @@ public class BattleSystem : MonoBehaviour
                 : target;
 
         // =====================================================
-        // –hŒä‘¤‘®«æ“¾
+        // é˜²å¾¡å´å±æ€§å–å¾—
         // =====================================================
 
         TypeData targetType1 = null;
@@ -111,7 +112,7 @@ public class BattleSystem : MonoBehaviour
         PlayerHealth playerHealth =
             actualTarget.GetComponent<PlayerHealth>();
 
-        // Œ»İPlayer‚Í‘®«‚È‚µ
+        // ç¾åœ¨Playerã¯å±æ€§ãªã—
         if (playerHealth != null)
         {
             targetType1 = null;
@@ -119,7 +120,7 @@ public class BattleSystem : MonoBehaviour
         }
 
         // =====================================================
-        // ‘®«‘Š«
+        // å±æ€§ç›¸æ€§
         // =====================================================
 
         TypeRelation relation =
@@ -130,14 +131,14 @@ public class BattleSystem : MonoBehaviour
             );
 
         // =====================================================
-        // UŒ‚‘¤‚ª–¡•û‚©“G‚©
+        // æ”»æ’ƒå´ãŒå‘³æ–¹ã‹æ•µã‹
         // =====================================================
 
         DamageCalculator.AttackerSide attackerSide =
             GetAttackerSide(attacker);
 
         // =====================================================
-        // ÅIƒ_ƒ[ƒW
+        // æœ€çµ‚ãƒ€ãƒ¡ãƒ¼ã‚¸
         // =====================================================
 
         int finalDamage =
@@ -149,26 +150,27 @@ public class BattleSystem : MonoBehaviour
             );
 
         Debug.Log(
-            $"{attacker.name} ¨ {actualTarget.name} / " +
+            $"{attacker.name} â†’ {actualTarget.name} / " +
             $"Side = {attackerSide} / " +
             $"Relation = {relation} / " +
             $"BaseDamage = {baseDamage} / " +
             $"Damage = {finalDamage}"
         );
 
-        damageable.TakeDamage(
-            finalDamage
-        );
+        if (enemyHealth != null)
+            enemyHealth.TakeDamage(finalDamage, attacker.transform.position, knockback);
+        else
+            damageable.TakeDamage(finalDamage);
     }
 
     // =========================================================
-    // UŒ‚‘¤”»’è
+    // æ”»æ’ƒå´åˆ¤å®š
     // =========================================================
 
     private DamageCalculator.AttackerSide
         GetAttackerSide(GameObject attacker)
     {
-        // EnemyController‚ğ‚Á‚Ä‚¢‚½‚ç“G
+        // EnemyControllerã‚’æŒã£ã¦ã„ãŸã‚‰æ•µ
         EnemyController enemy =
             attacker.GetComponent<EnemyController>();
 
@@ -183,12 +185,12 @@ public class BattleSystem : MonoBehaviour
             return DamageCalculator.AttackerSide.Enemy;
         }
 
-        // ‚»‚êˆÈŠO‚ÍPlayerECompanion‘¤
+        // ãã‚Œä»¥å¤–ã¯Playerãƒ»Companionå´
         return DamageCalculator.AttackerSide.Ally;
     }
 
     // =========================================================
-    // ‘®«‘Š«ŒvZ
+    // å±æ€§ç›¸æ€§è¨ˆç®—
     // =========================================================
 
     private TypeRelation CalculateRelation(
@@ -199,7 +201,7 @@ public class BattleSystem : MonoBehaviour
         if (TypeChart.Instance == null)
         {
             Debug.LogWarning(
-                "TypeChart.Instance ‚ª‘¶İ‚µ‚Ü‚¹‚ñB"
+                "TypeChart.Instance ãŒå­˜åœ¨ã—ã¾ã›ã‚“ã€‚"
             );
 
             return TypeRelation.Normal;
@@ -216,7 +218,7 @@ public class BattleSystem : MonoBehaviour
                 targetType1
             );
 
-        // ‘®«‚ª1‚Â‚¾‚¯
+        // å±æ€§ãŒ1ã¤ã ã‘
         if (targetType2 == null)
         {
             return relation1;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class EnemyHealth : MonoBehaviour, IDamageable
 {
-    [Header("“Gƒf[ƒ^")]
+    [Header("æ•µãƒ‡ãƒ¼ã‚¿")]
     [SerializeField] private EnemyData enemyData;
 
     public EnemyData EnemyData => enemyData;
@@ -34,6 +34,11 @@ public class EnemyHealth : MonoBehaviour, IDamageable
 
     public void TakeDamage(int damage)
     {
+        TakeDamage(damage, transform.position + transform.forward);
+    }
+
+    public void TakeDamage(int damage, Vector3 attackerPosition, CombatKnockback? knockback = null)
+    {
         if (isDefeated)
             return;
 
@@ -55,6 +60,11 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         {
             Die();
         }
+        else
+        {
+            EnemyController controller = GetComponent<EnemyController>();
+            if (controller != null) controller.ReceiveHit(attackerPosition, knockback);
+        }
     }
 
     private void Die()
@@ -73,10 +83,10 @@ public class EnemyHealth : MonoBehaviour, IDamageable
 
         if (controller != null)
         {
-            controller.ClearTarget();
+            controller.Defeat();
         }
 
-        // “GŒ‚”j‚ÉEXP‚ğ”z‚é
+        // æ•µæ’ƒç ´æ™‚ã«EXPã‚’é…ã‚‹
         if (ExperienceManager.Instance != null)
         {
             ExperienceManager.Instance

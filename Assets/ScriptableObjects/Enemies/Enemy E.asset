@@ -15,9 +15,12 @@ MonoBehaviour:
   enemyName: E
   type1: {fileID: 11400000, guid: 7a76f61951496324d911688b7d53ac43, type: 2}
   type2: {fileID: 0}
-  maxHP: 100
-  attack: 10
-  moveSpeed: 3
-  attackInterval: 1.5
-  attackRange: 1.5
+  maxHP: 50
+  attack: 5
+  moveSpeed: 6
+  attackInterval: 1
+  attackRange: 1
+  attackDuration: 0.5
+  attackArea: {x: 1, y: 1}
+  attackHeight: 4
   experience: 100

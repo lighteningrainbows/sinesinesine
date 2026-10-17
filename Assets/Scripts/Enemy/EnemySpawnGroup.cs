@@ -4,20 +4,20 @@ using UnityEngine;
 
 public class EnemySpawnGroup : MonoBehaviour
 {
-    [Header("oŒ»‚·‚é“G‚ÌPrefab")]
+    [Header("å‡ºç¾ã™ã‚‹æ•µã®Prefab")]
     [SerializeField] private GameObject[] enemyPrefabs;
 
-    [Header("“G‚ÌoŒ»ˆÊ’u")]
+    [Header("æ•µã®å‡ºç¾ä½ç½®")]
     [SerializeField] private Transform[] spawnPoints;
 
-    [Header("oŒ»”")]
+    [Header("å‡ºç¾æ•°")]
     [SerializeField] private int minEnemyCount = 1;
     [SerializeField] private int maxEnemyCount = 3;
 
-    [Header("ÄoŒ»‚Ü‚Å‚ÌŠÔ")]
+    [Header("å†å‡ºç¾ã¾ã§ã®æ™‚é–“")]
     [SerializeField] private float respawnSeconds = 30f;
 
-    [Header("ƒvƒŒƒCƒ„[E’‡ŠÔŠ´’m")]
+    [Header("ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãƒ»ä»²é–“æ„ŸçŸ¥")]
     [SerializeField] private float detectionRadius = 4.0f;
 
     private readonly List<GameObject> spawnedEnemies = new();
@@ -28,6 +28,14 @@ public class EnemySpawnGroup : MonoBehaviour
     private Transform player;
 
     private bool hasDetectedPlayer;
+
+    public Transform Player => player;
+
+    public bool ContainsTarget(Transform target)
+    {
+        return EnemyController.IsLivingTarget(target) &&
+               HorizontalDistance(transform.position, target.position) <= detectionRadius;
+    }
 
     public void SetPlayer(Transform targetPlayer)
     {
@@ -54,14 +62,14 @@ public class EnemySpawnGroup : MonoBehaviour
         if (isWaitingForRespawn)
             return;
 
-        // ƒvƒŒƒCƒ„[‚©Companion‚Ì‚Ç‚¿‚ç‚©‚ª
-        // W’c‚Ì4mˆÈ“à‚É‚¢‚é‚©Šm”F
+        // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‹Companionã®ã©ã¡ã‚‰ã‹ãŒ
+        // é›†å›£ã®4mä»¥å†…ã«ã„ã‚‹ã‹ç¢ºèª
         bool targetInsideGroup =
             IsPlayerInsideGroup() ||
             IsCompanionInsideGroup();
 
         // =====================================================
-        // ‚Ü‚¾Š´’m‚µ‚Ä‚¢‚È‚¢
+        // ã¾ã æ„ŸçŸ¥ã—ã¦ã„ãªã„
         // =====================================================
 
         if (!hasDetectedPlayer)
@@ -75,7 +83,7 @@ public class EnemySpawnGroup : MonoBehaviour
         }
 
         // =====================================================
-        // ƒvƒŒƒCƒ„[‚àCompanion‚à4m‚æ‚èŠO
+        // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚‚Companionã‚‚4mã‚ˆã‚Šå¤–
         // =====================================================
 
         if (!targetInsideGroup)
@@ -85,28 +93,16 @@ public class EnemySpawnGroup : MonoBehaviour
     }
 
     // =========================================================
-    // ƒvƒŒƒCƒ„[‚ª4mˆÈ“à‚©
+    // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒ4mä»¥å†…ã‹
     // =========================================================
 
     private bool IsPlayerInsideGroup()
     {
-        if (player == null)
-            return false;
-
-        if (!player.gameObject.activeInHierarchy)
-            return false;
-
-        float distance =
-            HorizontalDistance(
-                transform.position,
-                player.position
-            );
-
-        return distance <= detectionRadius;
+        return ContainsTarget(player);
     }
 
     // =========================================================
-    // Œ»İ‚ÌCompanion‚ª4mˆÈ“à‚©
+    // ç¾åœ¨ã®CompanionãŒ4mä»¥å†…ã‹
     // =========================================================
 
     private bool IsCompanionInsideGroup()
@@ -135,11 +131,11 @@ public class EnemySpawnGroup : MonoBehaviour
                 companion.transform.position
             );
 
-        return distance <= detectionRadius;
+        return distance <= detectionRadius && ContainsTarget(companion.transform);
     }
 
     // =========================================================
-    // Š´’mŠJn
+    // æ„ŸçŸ¥é–‹å§‹
     // =========================================================
 
     private void DetectPlayer()
@@ -147,7 +143,7 @@ public class EnemySpawnGroup : MonoBehaviour
         hasDetectedPlayer = true;
 
         Debug.Log(
-            $"{name} : ƒvƒŒƒCƒ„[‚Ü‚½‚ÍCompanion‚ğŠ´’m‚µ‚Ü‚µ‚½B"
+            $"{name} : ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã¾ãŸã¯Companionã‚’æ„ŸçŸ¥ã—ã¾ã—ãŸã€‚"
         );
 
         foreach (GameObject enemy in spawnedEnemies)
@@ -171,7 +167,7 @@ public class EnemySpawnGroup : MonoBehaviour
     }
 
     // =========================================================
-    // Š´’m‰ğœ
+    // æ„ŸçŸ¥è§£é™¤
     // =========================================================
 
     private void LosePlayerDetection()
@@ -179,7 +175,7 @@ public class EnemySpawnGroup : MonoBehaviour
         hasDetectedPlayer = false;
 
         Debug.Log(
-            $"{name} : ƒvƒŒƒCƒ„[‚ÆCompanion‚ªŠ´’m”ÍˆÍŠO‚Öo‚Ü‚µ‚½B“G‚ª‹AŠÒ‚µ‚Ü‚·B"
+            $"{name} : ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã¨CompanionãŒæ„ŸçŸ¥ç¯„å›²å¤–ã¸å‡ºã¾ã—ãŸã€‚æ•µãŒå¸°é‚„ã—ã¾ã™ã€‚"
         );
 
         foreach (GameObject enemy in spawnedEnemies)
@@ -201,7 +197,7 @@ public class EnemySpawnGroup : MonoBehaviour
     }
 
     // =========================================================
-    // “GƒXƒ|[ƒ“
+    // æ•µã‚¹ãƒãƒ¼ãƒ³
     // =========================================================
 
     private void SpawnEnemies()
@@ -210,7 +206,7 @@ public class EnemySpawnGroup : MonoBehaviour
             enemyPrefabs.Length == 0)
         {
             Debug.LogWarning(
-                $"{name} : “GPrefab‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB"
+                $"{name} : æ•µPrefabãŒè¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚"
             );
 
             return;
@@ -220,12 +216,15 @@ public class EnemySpawnGroup : MonoBehaviour
             spawnPoints.Length == 0)
         {
             Debug.LogWarning(
-                $"{name} : SpawnPoint‚ªİ’è‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB"
+                $"{name} : SpawnPointãŒè¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚"
             );
 
             return;
         }
 
+        // Discard the previous defeated group when creating its replacement.
+        foreach (GameObject previous in spawnedEnemies)
+            if (previous != null) Destroy(previous);
         spawnedEnemies.Clear();
 
         int minCount =
@@ -296,12 +295,12 @@ public class EnemySpawnGroup : MonoBehaviour
         }
 
         Debug.Log(
-            $"{name} : “G‚ğ{count}‘ÌƒXƒ|[ƒ“‚µ‚Ü‚µ‚½B"
+            $"{name} : æ•µã‚’{count}ä½“ã‚¹ãƒãƒ¼ãƒ³ã—ã¾ã—ãŸã€‚"
         );
     }
 
     // =========================================================
-    // ‘S–ÅŠÄ‹
+    // å…¨æ»…ç›£è¦–
     // =========================================================
 
     private IEnumerator MonitorGroup()
@@ -334,7 +333,7 @@ public class EnemySpawnGroup : MonoBehaviour
                 isWaitingForRespawn = true;
 
                 Debug.Log(
-                    $"{name} : W’c‘S–ÅB{respawnSeconds}•bŒã‚ÉÄoŒ»‚µ‚Ü‚·B"
+                    $"{name} : é›†å›£å…¨æ»…ã€‚{respawnSeconds}ç§’å¾Œã«å†å‡ºç¾ã—ã¾ã™ã€‚"
                 );
 
                 yield return
@@ -352,7 +351,7 @@ public class EnemySpawnGroup : MonoBehaviour
     }
 
     // =========================================================
-    // …•½•ûŒü‚Ì‹——£
+    // æ°´å¹³æ–¹å‘ã®è·é›¢
     // =========================================================
 
     private float HorizontalDistance(
@@ -371,7 +370,7 @@ public class EnemySpawnGroup : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        // W’c‚ÌŠ´’m”ÍˆÍ
+        // é›†å›£ã®æ„ŸçŸ¥ç¯„å›²
         Gizmos.color = Color.yellow;
 
         Gizmos.DrawWireSphere(

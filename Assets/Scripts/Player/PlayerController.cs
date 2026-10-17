@@ -22,6 +22,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float maxCameraAngle = 80f;
 
     private Rigidbody rb;
+    private PlayerCombat combat;
 
     private Vector2 moveInput;
     private Vector2 lookInput;
@@ -34,6 +35,7 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        combat = GetComponent<PlayerCombat>();
 
         if (cameraTransform != null)
         {
@@ -52,6 +54,11 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (combat != null && combat.ControlsMovement)
+        {
+            jumpInput = false;
+            return;
+        }
         Move();
 
         if (jumpInput)
@@ -196,7 +203,7 @@ public class PlayerController : MonoBehaviour
         float mouseOrStickY = lookInput.y;
 
         // プレイヤー本体を左右に回転
-        transform.Rotate(
+        if (combat == null || !combat.ControlsMovement) transform.Rotate(
             Vector3.up,
             mouseOrStickX * cameraSensitivity * Time.deltaTime
         );
