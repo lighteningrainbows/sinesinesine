@@ -13,12 +13,15 @@ public class EnemyCombat : MonoBehaviour
     private int activeDamage;
     private Vector2 activeArea;
     private bool previousWasStrong;
+    private bool hasPostAttackInterval;
     private readonly Collider[] hits = new Collider[32];
 
     public bool IsAttacking { get; private set; }
     public float AttackProgress => IsAttacking && enemyData != null
         ? 1f - attackRemaining / Mathf.Max(0.01f, activeDuration) : 0f;
     public float CooldownRemaining => cooldownRemaining;
+    public bool IsInPostAttackInterval => hasPostAttackInterval &&
+        !IsAttacking && cooldownRemaining > 0f;
     public bool IsStrongAttack { get; private set; }
     public float CurrentAttackDuration => activeDuration;
     public float CurrentAttackInterval => activeInterval;
@@ -37,6 +40,7 @@ public class EnemyCombat : MonoBehaviour
         attackTarget = null;
         cooldownRemaining = 0f;
         previousWasStrong = false;
+        hasPostAttackInterval = false;
         IsStrongAttack = false;
     }
 
@@ -58,6 +62,7 @@ public class EnemyCombat : MonoBehaviour
             IsAttacking = false;
             attackTarget = null;
             cooldownRemaining = activeInterval;
+            hasPostAttackInterval = true;
             // Recheck the committed box at impact: moving away dodges the attack.
             if (hit && BattleSystem.Instance != null)
                 BattleSystem.Instance.Attack(gameObject, target.gameObject,
@@ -76,6 +81,7 @@ public class EnemyCombat : MonoBehaviour
             activeDamage = IsStrongAttack ? boss.StrongDamage : enemyData.Attack;
             activeArea = IsStrongAttack ? boss.StrongArea : enemyData.AttackArea;
             attackRemaining = activeDuration;
+            hasPostAttackInterval = false;
             IsAttacking = true;
         }
     }
@@ -85,6 +91,7 @@ public class EnemyCombat : MonoBehaviour
         if (IsAttacking && enemyData != null)
             cooldownRemaining = Mathf.Max(cooldownRemaining, activeInterval);
         IsAttacking = false;
+        hasPostAttackInterval = false;
         attackTarget = null;
         attackRemaining = 0f;
     }
