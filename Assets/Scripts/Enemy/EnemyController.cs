@@ -37,6 +37,7 @@ public class EnemyController : MonoBehaviour
     private float reactionTimer;
     private bool hasDetectedPlayer;
     private CombatKnockback? comboKnockback;
+    private bool isEndingBossKnockback;
     private readonly RaycastHit[] groundHits = new RaycastHit[16];
 
     public EnemyState CurrentState => currentState;
@@ -49,6 +50,12 @@ public class EnemyController : MonoBehaviour
                           (health == null || health.CurrentHP > 0);
     public bool CanAttack => CanAct && hasDetectedPlayer &&
                              currentState == EnemyState.Attacking;
+    // 2026-10-23: bosses are vulnerable to knockback only while stationary
+    // in the interval after a completed attack. Damage still applies at all times.
+    public bool CanReceiveKnockback => enemyData == null || !enemyData.IsBoss ||
+        (combat != null && combat.IsInPostAttackInterval && hasDetectedPlayer &&
+         currentState != EnemyState.Chasing && currentState != EnemyState.Returning &&
+         currentState != EnemyState.Defeated);
 
     private void Awake()
     {
@@ -66,6 +73,7 @@ public class EnemyController : MonoBehaviour
         currentTarget = null;
         hasDetectedPlayer = false;
         targetSearchTimer = 0f;
+        isEndingBossKnockback = false;
         rb.useGravity = !isFlying;
         rb.linearVelocity = Vector3.zero;
     }
@@ -182,8 +190,11 @@ public class EnemyController : MonoBehaviour
     {
         if (currentState == EnemyState.Defeated ||
             (health != null && health.CurrentHP <= 0)) return;
-        if (combat != null) combat.CancelAttack();
+        if (!CanReceiveKnockback) return;
+        // A boss hit must never renew or close its existing interval.
+        if (combat != null && (enemyData == null || !enemyData.IsBoss)) combat.CancelAttack();
         comboKnockback = knockback;
+        isEndingBossKnockback = false;
         knockbackDirection = rb.position - attackerPosition;
         knockbackDirection.y = 0f;
         knockbackDirection = knockbackDirection.sqrMagnitude > 0.0001f
@@ -197,6 +208,21 @@ public class EnemyController : MonoBehaviour
 
     private void UpdateHitReaction()
     {
+        if (enemyData.IsBoss && (isEndingBossKnockback || combat == null ||
+            !combat.IsInPostAttackInterval || !hasDetectedPlayer))
+        {
+            // Interval expiry breaks the juggle. An airborne boss drops straight
+            // down; a grounded boss resumes AI without an extra recovery delay.
+            if (!isEndingBossKnockback)
+            {
+                isEndingBossKnockback = true;
+                BeginReactionPhase(EnemyState.Falling);
+                rb.useGravity = true;
+            }
+            StopMoving();
+            if (rb.linearVelocity.y <= 0f && IsGrounded()) FinishHitReaction();
+            return;
+        }
         float dt = Time.fixedDeltaTime;
         switch (currentState)
         {
@@ -237,9 +263,7 @@ public class EnemyController : MonoBehaviour
                 reactionTimer += dt;
                 if (reactionTimer >= recoveryDuration)
                 {
-                    rb.useGravity = !isFlying;
-                    currentState = EnemyState.Waiting;
-                    targetSearchTimer = 0f;
+                    FinishHitReaction();
                 }
                 break;
         }
@@ -250,6 +274,14 @@ public class EnemyController : MonoBehaviour
         currentState = state;
         reactionTimer = 0f;
         rb.linearVelocity = Vector3.zero;
+    }
+
+    private void FinishHitReaction()
+    {
+        rb.useGravity = !isFlying;
+        currentState = EnemyState.Waiting;
+        targetSearchTimer = 0f;
+        isEndingBossKnockback = false;
     }
 
     private bool IsGrounded()

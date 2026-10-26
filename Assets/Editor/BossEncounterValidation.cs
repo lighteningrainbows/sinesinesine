@@ -121,6 +121,11 @@ public static class BossEncounterValidation
         float began = Time.time;
         yield return .2f;
         Check(playerHealth.CurrentHP == health, "Weak attack respects its wind-up");
+        int bossHealthBefore = bossHP.CurrentHP;
+        bossHP.TakeDamage(1, player.transform.position);
+        Check(bossHP.CurrentHP == bossHealthBefore - 1 && combat.IsAttacking &&
+            !boss.IsStaggered && !boss.CanReceiveKnockback,
+            "October 23: weak wind-up takes damage without knockback or cancellation");
         yield return new EnemyAlphaValidation.Until(() => playerHealth.CurrentHP < health,
             "Weak attack lands");
         Check(health - playerHealth.CurrentHP == 20 && Time.time - began >= .45f &&
@@ -138,6 +143,11 @@ public static class BossEncounterValidation
         began = Time.time;
         yield return .8f;
         Check(playerHealth.CurrentHP == health, "Strong attack does not deal damage early");
+        bossHealthBefore = bossHP.CurrentHP;
+        bossHP.TakeDamage(1, player.transform.position, CombatKnockback.Finish);
+        Check(bossHP.CurrentHP == bossHealthBefore - 1 && combat.IsAttacking &&
+            combat.IsStrongAttack && !boss.IsStaggered,
+            "October 23: even a finisher cannot interrupt the heavy wind-up");
         yield return new EnemyAlphaValidation.Until(() => playerHealth.CurrentHP < health,
             "Strong attack lands");
         Check(health - playerHealth.CurrentHP == 40 && Time.time - began >= 1.9f &&
@@ -146,9 +156,11 @@ public static class BossEncounterValidation
         yield return new EnemyAlphaValidation.Until(() => combat.IsAttacking,
             "Boss attacks again after the strong cooldown");
         Check(!combat.IsStrongAttack, "Even a strong random roll cannot produce consecutive heavy attacks");
+        yield return new EnemyAlphaValidation.Until(() => combat.IsInPostAttackInterval,
+            "Boss completes its attack before the knockback window opens");
         bossHP.TakeDamage(1, player.transform.position);
-        Check(!combat.IsAttacking && boss.IsStaggered, "A hit interrupts the boss attack");
-        combat.enabled = false;
+        Check(!combat.IsAttacking && boss.IsStaggered && boss.CanReceiveKnockback,
+            "October 23: a hit staggers the stationary boss during its post-attack interval");
         yield return new EnemyAlphaValidation.Until(() => boss.CurrentState == EnemyController.EnemyState.AirPause,
             "Boss knockback reaches the aerial pause");
         bossHP.TakeDamage(1, player.transform.position);
@@ -158,6 +170,7 @@ public static class BossEncounterValidation
         began = Time.time;
         yield return new EnemyAlphaValidation.Until(() => !boss.IsStaggered, "Boss completes landing recovery");
         Check(Time.time - began >= .95f, "Boss landing recovery lasts one second");
+        combat.enabled = false;
 
         Move(allyBody, boss.transform.position + new Vector3(2.2f, 0, 0));
         Move(playerBody, boss.transform.position + new Vector3(0, -.5f, -2.2f));
@@ -177,6 +190,7 @@ public static class BossEncounterValidation
         playerHealth.TakeDamage(playerHealth.MaxHP);
         yield return .06f;
         Check(boss.CurrentTarget == active.transform, "Boss retargets the companion when the player is defeated");
+        int remainingBossHP = bossHP.CurrentHP;
         Move(allyBody, encounter.transform.position + new Vector3(20, 2, 0));
         yield return .06f;
         Check(boss.CurrentTarget == null, "Boss stops targeting characters outside its dedicated area");
@@ -185,7 +199,7 @@ public static class BossEncounterValidation
         yield return .04f;
         Move(playerBody, encounter.transform.position + new Vector3(0, 1, -12));
         yield return .06f;
-        Check(encounter.ActiveBoss == boss && bossHP.CurrentHP == 398,
+        Check(encounter.ActiveBoss == boss && bossHP.CurrentHP == remainingBossHP,
             "Leaving and re-entering preserves the same boss and remaining HP");
 
         ExperienceComponent playerExp = player.GetComponent<ExperienceComponent>();
@@ -213,6 +227,144 @@ public static class BossEncounterValidation
         Check(encounter.IsCleared && encounter.ActiveBoss == boss && !boss.gameObject.activeSelf,
             "Cleared encounter cannot respawn from repeated entry or event triggers");
         Check(playerExp.Experience == priorPlayerExp + 500, "Repeated damage never duplicates the boss reward");
+        IEnumerator knockback = RunOctober23Checks(encounter, playerBody);
+        while (knockback.MoveNext()) yield return knockback.Current;
+    }
+
+    private static IEnumerator RunOctober23Checks(BossEncounter encounter, Rigidbody player)
+    {
+        Vector3 home = encounter.transform.position + Vector3.up * 1.51f;
+        var root = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(
+            BossEncounterSetup.PrefabPath), home, Quaternion.identity);
+        EnemyController boss = root.GetComponent<EnemyController>();
+        EnemyCombat combat = root.GetComponent<EnemyCombat>();
+        EnemyHealth hp = root.GetComponent<EnemyHealth>();
+        Rigidbody body = root.GetComponent<Rigidbody>();
+        // Keep the real timings and physics, making only the attack selection deterministic.
+        EnemyData data = Object.Instantiate(hp.EnemyData);
+        BossAttackSettings attacks = Object.Instantiate(data.BossAttacks);
+        Set(attacks, "strongProbability", 0f);
+        Set(data, "bossAttacks", attacks);
+        Set(boss, "enemyData", data);
+        Set(combat, "enemyData", data);
+        Set(hp, "enemyData", data);
+        boss.SetBossEncounter(encounter);
+        BattleSystem battle = BattleSystem.Instance;
+        Move(player, home + new Vector3(0, -.5f, -7));
+        int before = hp.CurrentHP;
+        battle.Attack(player.gameObject, root, 15, null, CombatKnockback.Normal);
+        Check(hp.CurrentHP == before - 4 && !boss.IsStaggered && !boss.CanReceiveKnockback,
+            "October 23: an idle boss before its first attack takes damage but resists knockback");
+        boss.DetectPlayer();
+        yield return .12f;
+        Check(boss.CurrentState == EnemyController.EnemyState.Chasing && !boss.CanReceiveKnockback,
+            "October 23: a moving boss is immune to knockback");
+        before = hp.CurrentHP;
+        battle.Attack(player.gameObject, root, 30, null, CombatKnockback.Finish);
+        Check(hp.CurrentHP == before - 8 && !boss.IsStaggered,
+            "October 23: finisher damage applies during pursuit without interrupting movement");
+        Move(player, body.position + new Vector3(0, -.5f, -2.2f));
+        yield return new EnemyAlphaValidation.Until(() => combat.IsAttacking,
+            "October 23: the boss starts its first attack normally");
+        yield return new EnemyAlphaValidation.Until(() => combat.IsInPostAttackInterval,
+            "October 23: a completed attack opens the real two-second interval");
+        Check(boss.CanReceiveKnockback, "October 23: the stationary post-attack boss is vulnerable");
+
+        Move(player, body.position + new Vector3(0, -.5f, -7));
+        yield return .06f;
+        Check(combat.CooldownRemaining > 0f && boss.CurrentState == EnemyController.EnemyState.Chasing &&
+            !boss.CanReceiveKnockback, "October 23: moving during an interval still prevents knockback");
+        before = hp.CurrentHP;
+        battle.Attack(player.gameObject, root, 15, null, CombatKnockback.Normal);
+        Check(hp.CurrentHP == before - 4 && !boss.IsStaggered,
+            "October 23: a moving boss keeps chasing when hit during cooldown");
+        Move(player, body.position + new Vector3(0, -.5f, -2.2f));
+        yield return new EnemyAlphaValidation.Until(() => boss.CanReceiveKnockback,
+            "October 23: stopping in attack range reopens the remaining interval");
+        battle.Attack(player.gameObject, root, 15, null, CombatKnockback.Normal);
+        yield return new EnemyAlphaValidation.Until(() => boss.CurrentState == EnemyController.EnemyState.AirPause,
+            "October 23: a normal player hit still launches and pauses the vulnerable boss");
+        float intervalBefore = combat.CooldownRemaining;
+        hp.TakeDamage(1, player.position, CombatKnockback.Normal);
+        Check(boss.CurrentState == EnemyController.EnemyState.Knockback &&
+            combat.CooldownRemaining <= intervalBefore && combat.IsInPostAttackInterval,
+            "October 23: follow-up hits restart knockback without resetting or closing the interval");
+        yield return new EnemyAlphaValidation.Until(() => combat.CooldownRemaining > 0f &&
+            combat.CooldownRemaining < .14f, "October 23: the original interval approaches its deadline");
+        battle.Attack(player.gameObject, root, 30, null, CombatKnockback.Finish);
+        Check(boss.IsStaggered, "October 23: a finisher just before interval expiry starts a launch");
+        float deadline = Time.time + combat.CooldownRemaining;
+        yield return new EnemyAlphaValidation.Until(() => combat.CooldownRemaining <= 0f,
+            "October 23: cooldown continues to expire while the boss is airborne");
+        yield return .04f;
+        Check(!boss.CanReceiveKnockback && boss.CurrentState == EnemyController.EnemyState.Falling &&
+            body.useGravity && body.linearVelocity.y <= 0f &&
+            new Vector2(body.linearVelocity.x, body.linearVelocity.z).magnitude < .01f,
+            "October 23: interval expiry cancels the aerial launch and drops the boss vertically");
+        for (int i = 0; i < 3; i++)
+        {
+            before = hp.CurrentHP;
+            battle.Attack(player.gameObject, root, 30, null, CombatKnockback.Finish);
+            Check(hp.CurrentHP == before - 8 && !boss.CanReceiveKnockback &&
+                boss.CurrentState != EnemyController.EnemyState.Knockback &&
+                boss.CurrentState != EnemyController.EnemyState.AirPause,
+                $"October 23: airborne follow-up {i + 1} deals damage without renewing the launch");
+            yield return .025f;
+        }
+        yield return new EnemyAlphaValidation.Until(() => combat.IsAttacking,
+            "October 23: the landed boss breaks out of the combo and attacks again");
+        Check(Time.time - deadline < .8f && !boss.CanReceiveKnockback,
+            "October 23: expired knockback adds no extra one-second recovery before attacking");
+
+        yield return new EnemyAlphaValidation.Until(() => combat.IsInPostAttackInterval,
+            "October 23: the next completed attack opens a fresh interval");
+        Move(player, body.position + new Vector3(0, -.5f, -2.2f));
+        yield return new EnemyAlphaValidation.Until(() => combat.CooldownRemaining < .9f,
+            "October 23: the next interval reaches its final second");
+        battle.Attack(player.gameObject, root, 15, null, CombatKnockback.Normal);
+        yield return new EnemyAlphaValidation.Until(() => boss.CurrentState == EnemyController.EnemyState.Recovering,
+            "October 23: a vulnerable boss still enters normal landing recovery");
+        deadline = Time.time + combat.CooldownRemaining;
+        yield return new EnemyAlphaValidation.Until(() => combat.IsAttacking,
+            "October 23: interval expiry also releases a grounded recovery");
+        Check(Time.time - deadline < .15f && !boss.IsStaggered,
+            "October 23: grounded recovery cannot extend the post-attack vulnerability deadline");
+        combat.CancelAttack();
+        Check(combat.CooldownRemaining > 0f && !combat.IsInPostAttackInterval && !boss.CanReceiveKnockback,
+            "October 23: a cancelled wind-up is not a completed post-attack interval");
+        before = hp.CurrentHP;
+        battle.Attack(player.gameObject, root, 15, null, CombatKnockback.Normal);
+        Check(hp.CurrentHP == before - 4 && !boss.IsStaggered,
+            "October 23: cancellation cooldown does not accidentally make the boss vulnerable");
+        root.SetActive(false);
+        root.SetActive(true);
+        Check(!combat.IsInPostAttackInterval && !boss.CanReceiveKnockback,
+            "October 23: reactivation resets interval and knockback eligibility");
+        boss.DetectPlayer();
+        Move(player, body.position + new Vector3(0, -.5f, -2.2f));
+        yield return new EnemyAlphaValidation.Until(() => combat.IsAttacking,
+            "October 23: reactivated boss starts an immune attack");
+        hp.TakeDamage(10000, player.position);
+        Check(hp.CurrentHP == 0 && !root.activeSelf && !combat.IsAttacking,
+            "October 23: knockback immunity never prevents lethal damage or defeat");
+        Object.Destroy(root);
+        Object.Destroy(data);
+        Object.Destroy(attacks);
+        yield return .04f;
+    }
+
+    private static void Set(Object target, string field, Object value)
+    {
+        var settings = new SerializedObject(target);
+        settings.FindProperty(field).objectReferenceValue = value;
+        settings.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void Set(Object target, string field, float value)
+    {
+        var settings = new SerializedObject(target);
+        settings.FindProperty(field).floatValue = value;
+        settings.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static UnityEngine.Random.State RandomForRoll(bool strong)
