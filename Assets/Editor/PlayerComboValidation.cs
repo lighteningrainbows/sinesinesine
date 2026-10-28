@@ -223,15 +223,48 @@ public static class PlayerComboValidation
         Check(ally.IsDeployed && !reaction.IsActive && !allyBody.isKinematic,
             "Previously launched companion can deploy and resume its normal AI");
         ResetPlayer(combo, body, origin);
-        ally.enabled = false;
+        var allySettings = new SerializedObject(ally);
+        allySettings.FindProperty("isFlying").boolValue = false;
+        allySettings.ApplyModifiedPropertiesWithoutUndo();
+        ally.Deploy();
         allyBody.position = origin + Vector3.forward * 1.6f;
+        // Bird normally has gravity disabled; configure a grounded fixture for this case.
+        allyBody.useGravity = true;
         allyBody.linearVelocity = Vector3.zero;
-        allyBody.isKinematic = true;
         Physics.SyncTransforms();
         combo.RequestAttack();
-        yield return new EnemyAlphaValidation.Until(() => !combo.IsAttacking, "Attack near active companion completes");
-        Check(ally.GetComponent<IDamageable>().CurrentHP == allyHP && !reaction.IsActive,
-            "Active companion is not damaged or knocked back by the player's combo");
+        yield return new EnemyAlphaValidation.Until(() => reaction.IsActive,
+            "Player strike knocks back a deployed companion with its AI enabled");
+        Vector3 activeHitPosition = allyBody.position;
+        Check(ally.IsKnockedBack && ally.IsDeployed && ally.GetComponent<IDamageable>().CurrentHP == allyHP,
+            "Deployed companion is interrupted without HP damage or loss of deployment");
+        yield return new EnemyAlphaValidation.Until(() => !reaction.IsActive, "Deployed companion finishes normal knockback");
+        Check(!ally.IsKnockedBack && !allyBody.isKinematic && allyBody.useGravity &&
+            allyBody.position.z > activeHitPosition.z + .24f && ally.GetComponent<IDamageable>().CurrentHP == allyHP,
+            "Deployed companion receives normal displacement despite AI and restores ground physics without damage");
+        reaction.ReceiveHit(player.transform.position, CombatKnockback.Finish);
+        yield return .08f;
+        reaction.ReceiveHit(player.transform.position, CombatKnockback.Finish);
+        yield return new EnemyAlphaValidation.Until(() => !reaction.IsActive, "Repeated hits on a deployed companion complete");
+        Check(allyBody.useGravity && !allyBody.isKinematic && ally.GetComponent<IDamageable>().CurrentHP == allyHP,
+            "Repeated friendly hits preserve original physics and HP");
+        yield return new EnemyAlphaValidation.Until(() => allyBody.linearVelocity.z < -.1f,
+            "Deployed companion resumes following after the finisher lands");
+        reaction.ReceiveHit(player.transform.position, CombatKnockback.Normal);
+        ally.FreezeAsPreviousCompanion();
+        Check(!reaction.IsActive && ally.IsFrozenPrevious && allyBody.isKinematic && !allyBody.useGravity,
+            "Switching a launched deployed companion to fixed state cancels the reaction cleanly");
+        ally.ReleaseFrozenState();
+        allySettings.Update();
+        allySettings.FindProperty("isFlying").boolValue = true;
+        allySettings.ApplyModifiedPropertiesWithoutUndo();
+        ally.Deploy();
+        reaction.ReceiveHit(player.transform.position, CombatKnockback.Normal);
+        yield return .08f;
+        reaction.enabled = false;
+        Check(!reaction.IsActive && !allyBody.isKinematic && !allyBody.useGravity && ally.IsDeployed,
+            "Interrupting a flying companion's reaction restores its hovering physics");
+        reaction.enabled = true;
         ally.gameObject.SetActive(false);
         ResetPlayer(combo, body, origin);
         InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.J));

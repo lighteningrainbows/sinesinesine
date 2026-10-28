@@ -21,7 +21,7 @@ public class CompanionCombat : MonoBehaviour
         if (controller == null)
             return;
 
-        if (runtimeStats == null)
+        if (runtimeStats == null || controller.IsKnockedBack)
             return;
 
         // UŒ‚ó‘Ô‚Å‚È‚¯‚ê‚Î‰½‚à‚µ‚È‚¢

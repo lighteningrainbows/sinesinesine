@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Rigidbody), typeof(PlayerDodge))]
 public class PlayerCombat : MonoBehaviour
 {
     [SerializeField] private PlayerData playerData;
@@ -24,6 +24,7 @@ public class PlayerCombat : MonoBehaviour
     private Rigidbody body;
     private Collider bodyCollider;
     private PlayerHealth health;
+    private PlayerDodge dodge;
     private float elapsed, remainingStep, chainUntil, readyAt;
     private bool swinging, lifting, queued, hit, airborne, savedGravity;
     private int comboStep;
@@ -45,6 +46,7 @@ public class PlayerCombat : MonoBehaviour
         body = GetComponent<Rigidbody>();
         bodyCollider = GetComponent<Collider>();
         health = GetComponent<PlayerHealth>();
+        dodge = GetComponent<PlayerDodge>();
     }
 
     private void Update()
@@ -60,6 +62,7 @@ public class PlayerCombat : MonoBehaviour
     public bool RequestAttack()
     {
         if (!isActiveAndEnabled || playerData == null || Time.time < readyAt ||
+            (dodge != null && dodge.ControlsMovement) ||
             (health != null && health.CurrentHP <= 0)) return false;
         if (IsAttacking)
         {
@@ -185,7 +188,7 @@ public class PlayerCombat : MonoBehaviour
         EnemyHealth enemy = collider.GetComponentInParent<EnemyHealth>();
         if (enemy != null && enemy.CurrentHP > 0) return enemy;
         CompanionController ally = collider.GetComponentInParent<CompanionController>();
-        if (ally != null && ally.IsFrozenPrevious)
+        if (ally != null && (ally.IsFrozenPrevious || ally.IsDeployed))
         {
             IDamageable stats = ally.GetComponent<IDamageable>();
             if (stats == null || stats.CurrentHP > 0) return ally;

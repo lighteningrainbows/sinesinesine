@@ -49,6 +49,14 @@ public class CompanionController : MonoBehaviour
 
     public bool IsDeployed => isDeployed;
     public bool IsFrozenPrevious => isFrozenPrevious;
+    public bool IsKnockedBack
+    {
+        get
+        {
+            var knockback = GetComponent<FrozenCompanionKnockback>();
+            return knockback != null && knockback.IsActive;
+        }
+    }
 
     private void Awake()
     {
@@ -63,11 +71,10 @@ public class CompanionController : MonoBehaviour
 
     private void Update()
     {
+        if (IsKnockedBack) return;
         // ‘O‰ñ‚Ì–¡•û‚Æ‚µ‚ÄŒÅ’è’†
         if (isFrozenPrevious)
         {
-            var knockback = GetComponent<FrozenCompanionKnockback>();
-            if (knockback != null && knockback.IsActive) return;
             StopMoving();
             return;
         }
