@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Rigidbody), typeof(PlayerDodge))]
 public class PlayerController : MonoBehaviour
 {
     [Header("プレイヤーデータ")]
@@ -23,6 +23,8 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody rb;
     private PlayerCombat combat;
+    private PlayerDodge dodge;
+    private int previousDodgeSide;
 
     private Vector2 moveInput;
     private Vector2 lookInput;
@@ -36,6 +38,8 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         combat = GetComponent<PlayerCombat>();
+        dodge = GetComponent<PlayerDodge>();
+        if (dodge == null) dodge = gameObject.AddComponent<PlayerDodge>();
 
         if (cameraTransform != null)
         {
@@ -49,12 +53,14 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         ReadInput();
+        ReadDodgeInput();
         RotateCamera();
     }
 
     private void FixedUpdate()
     {
-        if (combat != null && combat.ControlsMovement)
+        if ((dodge != null && dodge.ControlsMovement) ||
+            (combat != null && combat.ControlsMovement))
         {
             jumpInput = false;
             return;
@@ -140,6 +146,21 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void ReadDodgeInput()
+    {
+        if (dodge == null) return;
+        bool held = (Gamepad.current != null && Gamepad.current.buttonEast.isPressed) ||
+            (Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed);
+        bool pressed = (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame) ||
+            (Keyboard.current != null && Keyboard.current.leftShiftKey.wasPressedThisFrame);
+        int side = Mathf.Abs(moveInput.x) >= dodge.LateralThreshold ? (moveInput.x > 0 ? 1 : -1) : 0;
+        if (side != 0 && held && (pressed || side != previousDodgeSide))
+        {
+            if (dodge.RequestDodge(side)) jumpInput = false;
+        }
+        previousDodgeSide = side;
+    }
+
     private void Move()
     {
         if (playerData == null)
@@ -203,7 +224,8 @@ public class PlayerController : MonoBehaviour
         float mouseOrStickY = lookInput.y;
 
         // プレイヤー本体を左右に回転
-        if (combat == null || !combat.ControlsMovement) transform.Rotate(
+        if ((dodge == null || !dodge.ControlsMovement) &&
+            (combat == null || !combat.ControlsMovement)) transform.Rotate(
             Vector3.up,
             mouseOrStickX * cameraSensitivity * Time.deltaTime
         );

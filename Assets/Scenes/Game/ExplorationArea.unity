@@ -7582,6 +7582,7 @@ GameObject:
   - component: {fileID: 1598887029}
   - component: {fileID: 1598887032}
   - component: {fileID: 1598887033}
+  - component: {fileID: 1598887034}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -7742,6 +7743,16 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   attackHeight: 4
+  normalDuration: 0.32
+  finishDuration: 0.42
+  impactFraction: 0.5
+  chainWindow: 0.65
+  finishRecovery: 0.45
+  stepDistance: 0.5
+  assistSize: {x: 2, y: 4, z: 2}
+  airLiftDistance: 0.2
+  airLiftDuration: 0.2
+  showFeedback: 1
 --- !u!114 &1598887031
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7791,6 +7802,24 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 8
+--- !u!114 &1598887034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1598887022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19d9f7bfee6443cca347efc1f868a760, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDodge
+  dodgeDistance: 0.3
+  motionDuration: 0.5
+  landingRecovery: 0.2
+  lateralThreshold: 0.35
+  hopHeight: 0.15
+  showFeedback: 1
 --- !u!1 &1614271903
 GameObject:
   m_ObjectHideFlags: 0

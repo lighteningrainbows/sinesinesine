@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Temporarily releases a fixed companion, without routing the strike through HP damage.
+// Reacts to friendly hits without routing the strike through HP damage.
 [RequireComponent(typeof(Rigidbody), typeof(CompanionController))]
 public class FrozenCompanionKnockback : MonoBehaviour
 {
@@ -11,6 +11,8 @@ public class FrozenCompanionKnockback : MonoBehaviour
     private Vector3 direction;
     private float elapsed;
     private int phase;
+    private bool savedGravity;
+    private bool savedKinematic;
     public bool IsActive { get; private set; }
 
     private void Awake()
@@ -22,7 +24,14 @@ public class FrozenCompanionKnockback : MonoBehaviour
 
     public void ReceiveHit(Vector3 origin, CombatKnockback knockback)
     {
-        if (!companion.IsFrozenPrevious) return;
+        if (!companion.IsFrozenPrevious && !companion.IsDeployed) return;
+        IDamageable stats = GetComponent<IDamageable>();
+        if (stats != null && stats.CurrentHP <= 0) return;
+        if (!IsActive)
+        {
+            savedGravity = body.useGravity;
+            savedKinematic = body.isKinematic;
+        }
         direction = body.position - origin;
         direction.y = 0f;
         direction = direction.sqrMagnitude > .001f ? direction.normalized : -transform.forward;
@@ -38,7 +47,7 @@ public class FrozenCompanionKnockback : MonoBehaviour
     private void FixedUpdate()
     {
         if (!IsActive) return;
-        if (!companion.IsFrozenPrevious) { Cancel(); return; }
+        if (!companion.IsFrozenPrevious && !companion.IsDeployed) { Cancel(); return; }
         float dt = Time.fixedDeltaTime;
         if (phase == 0)
         {
@@ -65,8 +74,6 @@ public class FrozenCompanionKnockback : MonoBehaviour
             if (velocity.y <= 0f && IsGrounded())
             {
                 Cancel();
-                body.useGravity = false;
-                body.isKinematic = true;
             }
         }
     }
@@ -83,18 +90,18 @@ public class FrozenCompanionKnockback : MonoBehaviour
 
     public void Cancel()
     {
-        if (IsActive && body != null && !body.isKinematic) body.linearVelocity = Vector3.zero;
+        if (!IsActive) return;
+        if (body != null)
+        {
+            if (!body.isKinematic) body.linearVelocity = Vector3.zero;
+            body.useGravity = savedGravity;
+            body.isKinematic = savedKinematic;
+        }
         IsActive = false;
     }
 
     private void OnDisable()
     {
-        if (!IsActive) return;
         Cancel();
-        if (companion != null && companion.IsFrozenPrevious)
-        {
-            body.useGravity = false;
-            body.isKinematic = true;
-        }
     }
 }
