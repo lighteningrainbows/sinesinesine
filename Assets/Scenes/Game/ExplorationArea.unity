@@ -4257,6 +4257,79 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1904795888}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &794793782
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 66.99864
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.00000059604645
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -7.2034955
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.14871457
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.98888016
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 162.895
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8491643146924381299, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7748163421605621886, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
+      propertyPath: m_Name
+      value: robot_tiger_animated
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: -7723101158813753257, guid: d9aa2cd2281398b4788eb3cdafd4657e, type: 3}
 --- !u!1 &809076816
 GameObject:
   m_ObjectHideFlags: 0
@@ -7814,7 +7887,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19d9f7bfee6443cca347efc1f868a760, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerDodge
-  dodgeDistance: 0.3
+  dodgeDistance: 2.5
   motionDuration: 0.5
   landingRecovery: 0.2
   lateralThreshold: 0.35
@@ -10785,3 +10858,4 @@ SceneRoots:
   - {fileID: 384160398}
   - {fileID: 741853072}
   - {fileID: 480762070}
+  - {fileID: 794793782}
