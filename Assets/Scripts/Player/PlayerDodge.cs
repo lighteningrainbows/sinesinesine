@@ -5,7 +5,7 @@ public class PlayerDodge : MonoBehaviour
 {
     public enum DodgePhase { Idle, Moving, Falling, Recovering }
 
-    [SerializeField, Min(0f)] private float dodgeDistance = .3f;
+    [SerializeField, Min(0f)] private float dodgeDistance = 2.5f;
     [SerializeField, Min(.01f)] private float motionDuration = .5f;
     [SerializeField, Min(0f)] private float landingRecovery = .2f;
     [SerializeField, Range(.01f, 1f)] private float lateralThreshold = .35f;
