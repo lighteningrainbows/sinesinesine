@@ -1,5 +1,65 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8794418183430478586
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb238eb9ca0891d4f897e485932852ab, type: 3}
+  m_Name: NegaPosiRenderFeature
+  m_EditorClassIdentifier: UtageForUrp::Utage.RenderPipeline.Urp.NegaPosiRenderFeature
+  m_Active: 1
+  shader: {fileID: 4800000, guid: 072b8818aeb6c48458f57480fa0b5a0c, type: 3}
+  shaderGraph: {fileID: -6465566751694194690, guid: 38af1a5376605d842b18bf03e6bcbf06, type: 3}
+--- !u!114 &-2616222309438485177
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abe302444d4dc9b49a4a96742c856374, type: 3}
+  m_Name: GrayScaleRenderFeature
+  m_EditorClassIdentifier: UtageForUrp::Utage.RenderPipeline.Urp.GrayScaleRenderFeature
+  m_Active: 1
+  shader: {fileID: 4800000, guid: cec0a7e004fe48044954c3c20110f03a, type: 3}
+  shaderGraph: {fileID: -6465566751694194690, guid: ed56e9317ea93b844a4a9793c9b50c9b, type: 3}
+--- !u!114 &-2055532440302037313
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e55b3c6ef5fc75543bcd6b68007dba8f, type: 3}
+  m_Name: TwirlRenderFeature
+  m_EditorClassIdentifier: UtageForUrp::Utage.RenderPipeline.Urp.TwirlRenderFeature
+  m_Active: 1
+  shader: {fileID: 4800000, guid: 20fb1b22057ea744084eaa886d7120f2, type: 3}
+  shaderGraph: {fileID: -6465566751694194690, guid: b5ddb7117991cfd4fb252bc93f980ea8, type: 3}
+--- !u!114 &-1188889668704779525
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53d3a45954086db47bc279834c5e9ae9, type: 3}
+  m_Name: FishEyeRenderFeature
+  m_EditorClassIdentifier: UtageForUrp::Utage.RenderPipeline.Urp.FishEyeRenderFeature
+  m_Active: 1
+  shader: {fileID: 4800000, guid: 6107a82838b37e647a8bc9784442ea0a, type: 3}
+  shaderGraph: {fileID: -6465566751694194690, guid: 98048854639d052449ddea0341edb3c8, type: 3}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13,32 +73,37 @@ MonoBehaviour:
   m_Name: PC_Renderer
   m_EditorClassIdentifier: 
   debugShaders:
-    debugReplacementPS: {fileID: 4800000, guid: cf852408f2e174538bcd9b7fda1c5ae7,
-      type: 3}
+    debugReplacementPS: {fileID: 4800000, guid: cf852408f2e174538bcd9b7fda1c5ae7, type: 3}
     hdrDebugViewPS: {fileID: 4800000, guid: 573620ae32aec764abd4d728906d2587, type: 3}
-    probeVolumeSamplingDebugComputeShader: {fileID: 7200000, guid: 53626a513ea68ce47b59dc1299fe3959,
-      type: 3}
+    probeVolumeSamplingDebugComputeShader: {fileID: 7200000, guid: 53626a513ea68ce47b59dc1299fe3959, type: 3}
   probeVolumeResources:
-    probeVolumeDebugShader: {fileID: 4800000, guid: e5c6678ed2aaa91408dd3df699057aae,
-      type: 3}
-    probeVolumeFragmentationDebugShader: {fileID: 4800000, guid: 03cfc4915c15d504a9ed85ecc404e607,
-      type: 3}
-    probeVolumeOffsetDebugShader: {fileID: 4800000, guid: 53a11f4ebaebf4049b3638ef78dc9664,
-      type: 3}
-    probeVolumeSamplingDebugShader: {fileID: 4800000, guid: 8f96cd657dc40064aa21efcc7e50a2e7,
-      type: 3}
-    probeSamplingDebugMesh: {fileID: -3555484719484374845, guid: 57d7c4c16e2765b47a4d2069b311bffe,
-      type: 3}
-    probeSamplingDebugTexture: {fileID: 2800000, guid: 24ec0e140fb444a44ab96ee80844e18e,
-      type: 3}
-    probeVolumeBlendStatesCS: {fileID: 7200000, guid: b9a23f869c4fd45f19c5ada54dd82176,
-      type: 3}
+    probeVolumeDebugShader: {fileID: 4800000, guid: e5c6678ed2aaa91408dd3df699057aae, type: 3}
+    probeVolumeFragmentationDebugShader: {fileID: 4800000, guid: 03cfc4915c15d504a9ed85ecc404e607, type: 3}
+    probeVolumeOffsetDebugShader: {fileID: 4800000, guid: 53a11f4ebaebf4049b3638ef78dc9664, type: 3}
+    probeVolumeSamplingDebugShader: {fileID: 4800000, guid: 8f96cd657dc40064aa21efcc7e50a2e7, type: 3}
+    probeSamplingDebugMesh: {fileID: -3555484719484374845, guid: 57d7c4c16e2765b47a4d2069b311bffe, type: 3}
+    probeSamplingDebugTexture: {fileID: 2800000, guid: 24ec0e140fb444a44ab96ee80844e18e, type: 3}
+    probeVolumeBlendStatesCS: {fileID: 7200000, guid: b9a23f869c4fd45f19c5ada54dd82176, type: 3}
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
-  m_RendererFeatureMap: ad6b866f10d7b46c
-  m_UseNativeRenderPass: 1
+  - {fileID: 8293457662467949207}
+  - {fileID: -2616222309438485177}
+  - {fileID: 6561723508889139385}
+  - {fileID: -8794418183430478586}
+  - {fileID: 6939494796843956636}
+  - {fileID: -1188889668704779525}
+  - {fileID: -2055532440302037313}
+  - {fileID: 3696333188126453911}
+  - {fileID: 8153829966543584649}
+  - {fileID: 7593693966551097653}
+  - {fileID: 6709487495151786668}
+  m_RendererFeatureMap: ad6b866f10d7b46c97c224abcd471873478d77c0ab4fb1dbb9b8aa0dc4ec0f5b06e563ca41f3f3859c398e2ec0094e60fb42b833253780efbf5681df224879e397b0c35973034c3389fdc35a2739287135214ef16d386269ac9a721554e31c5d
+  xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
-  m_AssetVersion: 2
+  m_AssetVersion: 3
+  m_PrepassLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   m_OpaqueLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -56,11 +121,89 @@ MonoBehaviour:
   m_RenderingMode: 2
   m_DepthPrimingMode: 0
   m_CopyDepthMode: 0
+  m_DepthAttachmentFormat: 0
+  m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 0
+  m_TileOnlyMode: 0
+--- !u!114 &3696333188126453911
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e42166354176594ba4ae90a6a5b9b61, type: 3}
+  m_Name: VortexRenderFeature
+  m_EditorClassIdentifier: UtageForUrp::Utage.RenderPipeline.Urp.VortexRenderFeature
+  m_Active: 1
+  shader: {fileID: 4800000, guid: 1c03a8a6c36d2574599752d93d64696e, type: 3}
+  shaderGraph: {fileID: -6465566751694194690, guid: aab7150b3cf883d49818a969c3f6592f, type: 3}
+--- !u!114 &6561723508889139385
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42998c646b166284a82d614774980b7f, type: 3}
+  m_Name: MosaicRenderFeature
+  m_EditorClassIdentifier: UtageForUrp::Utage.RenderPipeline.Urp.MosaicRenderFeature
+  m_Active: 1
+  shader: {fileID: 4800000, guid: 349a330ee4aa2f14693ae667ba881676, type: 3}
+  shaderGraph: {fileID: -6465566751694194690, guid: 4263948526e6e8149ab5b47dd57a09dc, type: 3}
+--- !u!114 &6709487495151786668
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 616915dd54c9a92459e30a1bf14f46bb, type: 3}
+  m_Name: RuleFadeRenderFeature
+  m_EditorClassIdentifier: UtageForUrp::Utage.RenderPipeline.Urp.RuleFadeRenderFeature
+  m_Active: 1
+  shader: {fileID: 4800000, guid: 09ecb96942957084bbf93247bc39cf80, type: 3}
+  shaderGraph: {fileID: -6465566751694194690, guid: 11c313458b36ae247b6161eb447427fa, type: 3}
+--- !u!114 &6939494796843956636
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab18a3769bc045f4887c3d218cbadefb, type: 3}
+  m_Name: SepiaRenderFeature
+  m_EditorClassIdentifier: UtageForUrp::Utage.RenderPipeline.Urp.SepiaRenderFeature
+  m_Active: 1
+  shader: {fileID: 4800000, guid: 2a1f432e247e2114896a58773922f9ee, type: 3}
+  shaderGraph: {fileID: -6465566751694194690, guid: 75ceb7fbfe5e9d04c81e373a66d1d6e2, type: 3}
+--- !u!114 &7593693966551097653
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8de49c111749fea020f64aea6a17d6, type: 3}
+  m_Name: ColorFadeRenderFeature
+  m_EditorClassIdentifier: UtageForUrp::Utage.RenderPipeline.Urp.ColorFadeRenderFeature
+  m_Active: 1
+  shader: {fileID: 4800000, guid: 99911b19beba955489d7a41660081882, type: 3}
+  shaderGraph: {fileID: -6465566751694194690, guid: 6a118a38894069c4e919667b22077116, type: 3}
 --- !u!114 &7833122117494664109
 MonoBehaviour:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
@@ -84,12 +227,33 @@ MonoBehaviour:
     BlurQuality: 0
     Falloff: 100
     SampleCount: -1
-  m_BlueNoise256Textures:
-  - {fileID: 2800000, guid: 36f118343fc974119bee3d09e2111500, type: 3}
-  - {fileID: 2800000, guid: 4b7b083e6b6734e8bb2838b0b50a0bc8, type: 3}
-  - {fileID: 2800000, guid: c06cc21c692f94f5fb5206247191eeee, type: 3}
-  - {fileID: 2800000, guid: cb76dd40fa7654f9587f6a344f125c9a, type: 3}
-  - {fileID: 2800000, guid: e32226222ff144b24bf3a5a451de54bc, type: 3}
-  - {fileID: 2800000, guid: 3302065f671a8450b82c9ddf07426f3a, type: 3}
-  - {fileID: 2800000, guid: 56a77a3e8d64f47b6afe9e3c95cb57d5, type: 3}
-  m_Shader: {fileID: 4800000, guid: 0849e84e3d62649e8882e9d6f056a017, type: 3}
+--- !u!114 &8153829966543584649
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 243e32d7eeec74648adfb24fcc65b9cb, type: 3}
+  m_Name: BlurRenderFeature
+  m_EditorClassIdentifier: UtageForUrp::Utage.RenderPipeline.Urp.BlurRenderFeature
+  m_Active: 1
+  shaderDownSample: {fileID: 4800000, guid: 27ce29ad5f0846eaadc4d0d5db6230ba, type: 3}
+  shaderGauss: {fileID: 4800000, guid: 41d28a4d90ea4d2dba116b099d516537, type: 3}
+  shaderSgxGauss: {fileID: 4800000, guid: 6c26598dc29f4beaacffa89858c6842e, type: 3}
+  shaderGraphDownSample: {fileID: -6465566751694194690, guid: 1dc11e6e992146e4cba22cc469a91060, type: 3}
+--- !u!114 &8293457662467949207
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce7c559436a349f78b6837a930c199e1, type: 3}
+  m_Name: CaptureRenderFeature
+  m_EditorClassIdentifier: UtageForUrp::Utage.RenderPipeline.Urp.CaptureRenderFeature
+  m_Active: 1
