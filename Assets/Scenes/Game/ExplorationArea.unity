@@ -2366,7 +2366,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnGroup
   enemyPrefabs:
   - {fileID: 4575721303463175423, guid: 0b4038ac9a30436499b168cfc6ae4879, type: 3}
+  - {fileID: 317655699271847162, guid: 4634968d7a32ea64f92f057f1d936de3, type: 3}
+  - {fileID: 7250948892760312294, guid: e129136fa38f31d4793de02d74c945d6, type: 3}
   - {fileID: 4575721303463175423, guid: e0f9327cabd06784894b96511d64b05b, type: 3}
+  - {fileID: 6946001128665895946, guid: 1b45503ec23379846aab30ea8a8f3797, type: 3}
+  - {fileID: 1610983356367639990, guid: 812deef2d3e76424f970d612091afa01, type: 3}
   spawnPoints:
   - {fileID: 385015862}
   - {fileID: 809076817}
@@ -3788,7 +3792,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnGroup
   enemyPrefabs:
   - {fileID: 4575721303463175423, guid: 0b4038ac9a30436499b168cfc6ae4879, type: 3}
+  - {fileID: 317655699271847162, guid: 4634968d7a32ea64f92f057f1d936de3, type: 3}
+  - {fileID: 7250948892760312294, guid: e129136fa38f31d4793de02d74c945d6, type: 3}
   - {fileID: 4575721303463175423, guid: e0f9327cabd06784894b96511d64b05b, type: 3}
+  - {fileID: 6946001128665895946, guid: 1b45503ec23379846aab30ea8a8f3797, type: 3}
+  - {fileID: 1610983356367639990, guid: 812deef2d3e76424f970d612091afa01, type: 3}
   spawnPoints:
   - {fileID: 372640610}
   - {fileID: 451952737}
@@ -4149,7 +4157,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnGroup
   enemyPrefabs:
   - {fileID: 4575721303463175423, guid: 9993a701c149b144390af39b0c471629, type: 3}
+  - {fileID: 588741138030105865, guid: 63cd10d950f54d04a839514fcdac436e, type: 3}
+  - {fileID: 8993249478029721649, guid: 183eb7f3e6096d64293ef6ff33946eb9, type: 3}
   - {fileID: 4575721303463175423, guid: ab0a2471a83686c4aae324a1e25c3305, type: 3}
+  - {fileID: 6345621688712156037, guid: ef5ad2bdbdbbda24a994edf290bd263c, type: 3}
+  - {fileID: 6174164697026975637, guid: 35a526b355762ed42a09bc2adceb29c1, type: 3}
   spawnPoints:
   - {fileID: 1786039389}
   - {fileID: 760577412}
@@ -4521,7 +4533,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnGroup
   enemyPrefabs:
   - {fileID: 4575721303463175423, guid: 9993a701c149b144390af39b0c471629, type: 3}
+  - {fileID: 588741138030105865, guid: 63cd10d950f54d04a839514fcdac436e, type: 3}
+  - {fileID: 8993249478029721649, guid: 183eb7f3e6096d64293ef6ff33946eb9, type: 3}
   - {fileID: 4575721303463175423, guid: ab0a2471a83686c4aae324a1e25c3305, type: 3}
+  - {fileID: 6345621688712156037, guid: ef5ad2bdbdbbda24a994edf290bd263c, type: 3}
+  - {fileID: 6174164697026975637, guid: 35a526b355762ed42a09bc2adceb29c1, type: 3}
   spawnPoints:
   - {fileID: 1134640206}
   - {fileID: 268109763}
@@ -4579,7 +4595,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnGroup
   enemyPrefabs:
   - {fileID: 4575721303463175423, guid: 9993a701c149b144390af39b0c471629, type: 3}
+  - {fileID: 588741138030105865, guid: 63cd10d950f54d04a839514fcdac436e, type: 3}
+  - {fileID: 8993249478029721649, guid: 183eb7f3e6096d64293ef6ff33946eb9, type: 3}
   - {fileID: 4575721303463175423, guid: 0ff6d95bd09a9094aa496ccf622935b1, type: 3}
+  - {fileID: 270490326074062596, guid: 62908db83c7b5fb4181b697ec42556e0, type: 3}
+  - {fileID: 5652376887434796798, guid: 5f29fc5c24812b844a5e5b680bf41837, type: 3}
   spawnPoints:
   - {fileID: 670727711}
   - {fileID: 517551428}
@@ -6418,7 +6438,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnGroup
   enemyPrefabs:
   - {fileID: 4575721303463175423, guid: 0b4038ac9a30436499b168cfc6ae4879, type: 3}
+  - {fileID: 317655699271847162, guid: 4634968d7a32ea64f92f057f1d936de3, type: 3}
+  - {fileID: 7250948892760312294, guid: e129136fa38f31d4793de02d74c945d6, type: 3}
   - {fileID: 4575721303463175423, guid: e0f9327cabd06784894b96511d64b05b, type: 3}
+  - {fileID: 6946001128665895946, guid: 1b45503ec23379846aab30ea8a8f3797, type: 3}
+  - {fileID: 1610983356367639990, guid: 812deef2d3e76424f970d612091afa01, type: 3}
   spawnPoints:
   - {fileID: 1335392846}
   - {fileID: 945829299}
@@ -7294,7 +7318,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnGroup
   enemyPrefabs:
   - {fileID: 4575721303463175423, guid: 9993a701c149b144390af39b0c471629, type: 3}
+  - {fileID: 588741138030105865, guid: 63cd10d950f54d04a839514fcdac436e, type: 3}
+  - {fileID: 8993249478029721649, guid: 183eb7f3e6096d64293ef6ff33946eb9, type: 3}
   - {fileID: 4575721303463175423, guid: 0ff6d95bd09a9094aa496ccf622935b1, type: 3}
+  - {fileID: 270490326074062596, guid: 62908db83c7b5fb4181b697ec42556e0, type: 3}
+  - {fileID: 5652376887434796798, guid: 5f29fc5c24812b844a5e5b680bf41837, type: 3}
   spawnPoints:
   - {fileID: 1867496272}
   - {fileID: 80970916}
@@ -8529,7 +8557,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnGroup
   enemyPrefabs:
   - {fileID: 4575721303463175423, guid: 9993a701c149b144390af39b0c471629, type: 3}
+  - {fileID: 588741138030105865, guid: 63cd10d950f54d04a839514fcdac436e, type: 3}
+  - {fileID: 8993249478029721649, guid: 183eb7f3e6096d64293ef6ff33946eb9, type: 3}
   - {fileID: 4575721303463175423, guid: ab0a2471a83686c4aae324a1e25c3305, type: 3}
+  - {fileID: 6345621688712156037, guid: ef5ad2bdbdbbda24a994edf290bd263c, type: 3}
+  - {fileID: 6174164697026975637, guid: 35a526b355762ed42a09bc2adceb29c1, type: 3}
   spawnPoints:
   - {fileID: 1555266232}
   - {fileID: 207270298}
@@ -9317,7 +9349,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnGroup
   enemyPrefabs:
   - {fileID: 4575721303463175423, guid: 9993a701c149b144390af39b0c471629, type: 3}
+  - {fileID: 588741138030105865, guid: 63cd10d950f54d04a839514fcdac436e, type: 3}
+  - {fileID: 8993249478029721649, guid: 183eb7f3e6096d64293ef6ff33946eb9, type: 3}
   - {fileID: 4575721303463175423, guid: 0ff6d95bd09a9094aa496ccf622935b1, type: 3}
+  - {fileID: 270490326074062596, guid: 62908db83c7b5fb4181b697ec42556e0, type: 3}
+  - {fileID: 5652376887434796798, guid: 5f29fc5c24812b844a5e5b680bf41837, type: 3}
   spawnPoints:
   - {fileID: 1513498671}
   - {fileID: 776513912}

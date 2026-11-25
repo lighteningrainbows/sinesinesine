@@ -64,6 +64,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable
         {
             EnemyController controller = GetComponent<EnemyController>();
             if (controller != null) controller.ReceiveHit(attackerPosition, knockback);
+            GetComponent<EnemyRobotAnimation>()?.ReplayDamage();
         }
     }
 
@@ -95,6 +96,7 @@ public class EnemyHealth : MonoBehaviour, IDamageable
                 );
         }
 
+        GetComponent<EnemyRobotAnimation>()?.PlayDeath();
         gameObject.SetActive(false);
     }
 }

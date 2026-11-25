@@ -34,6 +34,7 @@ public static class PlayerDodgeValidation
         EditorSceneManager.LoadSceneInPlayMode(BossEncounterSetup.ScenePath,
             new LoadSceneParameters(LoadSceneMode.Single));
         yield return .12f;
+        foreach (StageArea area in Object.FindObjectsByType<StageArea>()) area.enabled = false;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         Rigidbody body = player.GetComponent<Rigidbody>();
         PlayerDodge dodge = player.GetComponent<PlayerDodge>();
@@ -176,7 +177,12 @@ public static class PlayerDodgeValidation
         yield return .12f;
         Check(!dodge.IsDodging && body.linearVelocity.z > 5.5f, "Dodge: forward plus B retains the existing run control");
         InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = Vector2.left }.WithButton(GamepadButton.East));
-        yield return new EnemyAlphaValidation.Until(() => dodge.IsMoving, "Dodge: turning the stick sideways while holding B starts evasion");
+        yield return .06f;
+        Check(!dodge.IsDodging, "Dodge: changing direction with B held does not create a fresh dodge press");
+        InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = Vector2.left });
+        yield return .04f;
+        InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = Vector2.left }.WithButton(GamepadButton.East));
+        yield return new EnemyAlphaValidation.Until(() => dodge.IsMoving, "Dodge: pressing B during sideways input starts evasion");
         InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.North));
         yield return .06f;
         Check(!combo.IsAttacking, "Dodge: gamepad Y cannot start an attack during evasion");

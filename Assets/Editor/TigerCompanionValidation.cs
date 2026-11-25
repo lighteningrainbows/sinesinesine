@@ -43,6 +43,7 @@ public static class TigerCompanionValidation
     {
         EditorSceneManager.LoadSceneInPlayMode(BossEncounterSetup.ScenePath, new LoadSceneParameters(LoadSceneMode.Single));
         yield return .15f;
+        foreach (StageArea area in Object.FindObjectsByType<StageArea>()) area.enabled = false;
         foreach (EnemySpawnGroup group in Object.FindObjectsByType<EnemySpawnGroup>()) group.gameObject.SetActive(false);
         foreach (EnemyController enemy in Object.FindObjectsByType<EnemyController>()) enemy.gameObject.SetActive(false);
         GameObject player = GameObject.FindGameObjectWithTag("Player");

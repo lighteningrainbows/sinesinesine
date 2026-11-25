@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 802af311b9cf2634cae75a7f74495631, type: 3}
   m_Name: Enemy D
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
-  enemyName: D
+  enemyName: EnemyD_Balance
+  archetype: 0
+  attackKnockbackArmor: 1
   type1: {fileID: 11400000, guid: fe40331d1b5766a41b27e8ea8fe85dd0, type: 2}
   type2: {fileID: 0}
   maxHP: 100
@@ -23,4 +25,5 @@ MonoBehaviour:
   attackDuration: 0.5
   attackArea: {x: 1.5, y: 1.5}
   attackHeight: 4
+  bossAttacks: {fileID: 0}
   experience: 100

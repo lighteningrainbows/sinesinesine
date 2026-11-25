@@ -400,6 +400,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnGroup
   enemyPrefabs:
   - {fileID: 4575721303463175423, guid: 0b4038ac9a30436499b168cfc6ae4879, type: 3}
+  - {fileID: 317655699271847162, guid: 4634968d7a32ea64f92f057f1d936de3, type: 3}
+  - {fileID: 7250948892760312294, guid: e129136fa38f31d4793de02d74c945d6, type: 3}
   spawnPoints:
   - {fileID: 385015862}
   - {fileID: 809076817}
@@ -692,6 +694,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnGroup
   enemyPrefabs:
   - {fileID: 4575721303463175423, guid: 0b4038ac9a30436499b168cfc6ae4879, type: 3}
+  - {fileID: 317655699271847162, guid: 4634968d7a32ea64f92f057f1d936de3, type: 3}
+  - {fileID: 7250948892760312294, guid: e129136fa38f31d4793de02d74c945d6, type: 3}
   spawnPoints:
   - {fileID: 372640610}
   - {fileID: 451952737}
@@ -1142,6 +1146,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnGroup
   enemyPrefabs:
   - {fileID: 4575721303463175423, guid: 0b4038ac9a30436499b168cfc6ae4879, type: 3}
+  - {fileID: 317655699271847162, guid: 4634968d7a32ea64f92f057f1d936de3, type: 3}
+  - {fileID: 7250948892760312294, guid: e129136fa38f31d4793de02d74c945d6, type: 3}
   spawnPoints:
   - {fileID: 1335392846}
   - {fileID: 945829299}
