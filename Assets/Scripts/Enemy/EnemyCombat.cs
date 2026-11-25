@@ -17,6 +17,7 @@ public class EnemyCombat : MonoBehaviour
     private readonly Collider[] hits = new Collider[32];
 
     public bool IsAttacking { get; private set; }
+    public int AttackSequence { get; private set; }
     public float AttackProgress => IsAttacking && enemyData != null
         ? 1f - attackRemaining / Mathf.Max(0.01f, activeDuration) : 0f;
     public float CooldownRemaining => cooldownRemaining;
@@ -63,6 +64,8 @@ public class EnemyCombat : MonoBehaviour
             attackTarget = null;
             cooldownRemaining = activeInterval;
             hasPostAttackInterval = true;
+            if (enemyData.Archetype == EnemyArchetype.Gun)
+                GetComponent<EnemyRobotAnimation>()?.ShowShot();
             // Recheck the committed box at impact: moving away dodges the attack.
             if (hit && BattleSystem.Instance != null)
                 BattleSystem.Instance.Attack(gameObject, target.gameObject,
@@ -83,6 +86,7 @@ public class EnemyCombat : MonoBehaviour
             attackRemaining = activeDuration;
             hasPostAttackInterval = false;
             IsAttacking = true;
+            AttackSequence++;
         }
     }
 
@@ -105,8 +109,23 @@ public class EnemyCombat : MonoBehaviour
             transform.rotation, LayerMask.GetMask("Player", "Companion"),
             QueryTriggerInteraction.Ignore);
         for (int i = 0; i < count; i++)
-            if (hits[i].GetComponentInParent<IDamageable>() == receiver) return true;
+            if (hits[i].GetComponentInParent<IDamageable>() == receiver &&
+                (enemyData.Archetype != EnemyArchetype.Gun || ClearShot(hits[i]))) return true;
         return false;
+    }
+
+    private bool ClearShot(Collider target)
+    {
+        Vector3 start = body != null ? body.bounds.center : transform.position;
+        Vector3 delta = target.bounds.center - start;
+        foreach (RaycastHit hit in Physics.RaycastAll(start, delta.normalized, delta.magnitude,
+                     ~0, QueryTriggerInteraction.Ignore))
+        {
+            if (hit.collider.GetComponentInParent<EnemyCombat>() == this) continue;
+            if (hit.collider.GetComponentInParent<IDamageable>() == target.GetComponentInParent<IDamageable>()) continue;
+            return false;
+        }
+        return true;
     }
 
     public void GetAttackBox(out Vector3 center, out Vector3 halfExtents)

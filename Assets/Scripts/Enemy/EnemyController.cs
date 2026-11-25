@@ -52,10 +52,11 @@ public class EnemyController : MonoBehaviour
                              currentState == EnemyState.Attacking;
     // 2026-10-23: bosses are vulnerable to knockback only while stationary
     // in the interval after a completed attack. Damage still applies at all times.
-    public bool CanReceiveKnockback => enemyData == null || !enemyData.IsBoss ||
+    public bool CanReceiveKnockback => (enemyData == null || !enemyData.AttackKnockbackArmor ||
+        combat == null || !combat.IsAttacking) && (enemyData == null || !enemyData.IsBoss ||
         (combat != null && combat.IsInPostAttackInterval && hasDetectedPlayer &&
          currentState != EnemyState.Chasing && currentState != EnemyState.Returning &&
-         currentState != EnemyState.Defeated);
+         currentState != EnemyState.Defeated));
 
     private void Awake()
     {

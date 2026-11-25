@@ -27,6 +27,8 @@ public class FrozenCompanionKnockback : MonoBehaviour
         if (!companion.IsFrozenPrevious && !companion.IsDeployed) return;
         IDamageable stats = GetComponent<IDamageable>();
         if (stats != null && stats.CurrentHP <= 0) return;
+        CompanionCombat combat = GetComponent<CompanionCombat>();
+        if (combat != null) combat.CancelAttack();
         if (!IsActive)
         {
             savedGravity = body.useGravity;

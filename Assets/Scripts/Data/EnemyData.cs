@@ -1,5 +1,7 @@
 using UnityEngine;
 
+public enum EnemyArchetype { Standard, Power, Gun }
+
 [CreateAssetMenu(
     fileName = "EnemyData",
     menuName = "Game/Data/Enemy Data"
@@ -9,6 +11,8 @@ public class EnemyData : ScriptableObject
     [Header("基本情報")]
     [SerializeField]
     private string enemyName;
+    [SerializeField] private EnemyArchetype archetype;
+    [SerializeField] private bool attackKnockbackArmor;
 
     [Header("タイプ")]
     [SerializeField]
@@ -46,6 +50,8 @@ public class EnemyData : ScriptableObject
     private int experience = 100;
 
     public string EnemyName => enemyName;
+    public EnemyArchetype Archetype => archetype;
+    public bool AttackKnockbackArmor => attackKnockbackArmor;
 
     public TypeData Type1 => type1;
     public TypeData Type2 => type2;

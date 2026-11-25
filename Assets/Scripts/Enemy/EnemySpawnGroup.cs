@@ -44,6 +44,7 @@ public class EnemySpawnGroup : MonoBehaviour
 
     public void BeginSpawn()
     {
+        if (!gameObject.activeInHierarchy) return;
         if (hasStarted)
             return;
 

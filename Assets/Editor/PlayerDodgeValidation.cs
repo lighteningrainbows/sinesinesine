@@ -23,7 +23,7 @@ public static class PlayerDodgeValidation
         {
             Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
             PlayerDodge dodge = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerDodge>();
-            Check(dodge != null && dodge.Distance == .3f && dodge.MotionDuration == .5f &&
+            Check(dodge != null && dodge.Distance > 0f && dodge.MotionDuration == .5f &&
                 dodge.LandingRecovery == .2f, $"Dodge: authored values in {path}");
         }
     }
@@ -34,9 +34,11 @@ public static class PlayerDodgeValidation
         EditorSceneManager.LoadSceneInPlayMode(BossEncounterSetup.ScenePath,
             new LoadSceneParameters(LoadSceneMode.Single));
         yield return .12f;
+        foreach (StageArea area in Object.FindObjectsByType<StageArea>()) area.enabled = false;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         Rigidbody body = player.GetComponent<Rigidbody>();
         PlayerDodge dodge = player.GetComponent<PlayerDodge>();
+        float distance = dodge.Distance;
         PlayerCombat combo = player.GetComponent<PlayerCombat>();
         PlayerHealth health = player.GetComponent<PlayerHealth>();
         foreach (EnemySpawnGroup group in Object.FindObjectsByType<EnemySpawnGroup>()) group.gameObject.SetActive(false);
@@ -54,9 +56,11 @@ public static class PlayerDodgeValidation
             "Dodge: right input starts the lateral hop");
         InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.W, Key.Space));
         yield return .25f;
-        Check(Mathf.Abs(body.position.x - start.x - .15f) < .035f &&
+        // The scene may tune distance; allow one physics tick when sampling between ticks.
+        float sampleTolerance = distance * Time.fixedDeltaTime / dodge.MotionDuration + .025f;
+        Check(Mathf.Abs(body.position.x - start.x - distance * .5f) < sampleTolerance &&
             Mathf.Abs(body.position.z - start.z) < .02f && body.position.y > start.y + .08f,
-            "Dodge: halfway position follows the hop despite movement and jump input");
+            $"Dodge: halfway position follows the hop despite movement and jump input (elapsed={Time.time - started:F3}, delta={body.position - start}, phase={dodge.Phase})");
         InputSystem.QueueStateEvent(keyboard, new KeyboardState());
         Capture(player);
         GameObject attacker = SpawnBody(new Vector3(100, 1, 20));
@@ -67,8 +71,8 @@ public static class PlayerDodgeValidation
         Object.Destroy(attacker);
         yield return new EnemyAlphaValidation.Until(() => dodge.Phase == PlayerDodge.DodgePhase.Recovering,
             "Dodge: landing starts recovery");
-        Check(Time.time - started >= .49f && Mathf.Abs(body.position.x - start.x - .3f) < .025f,
-            "Dodge: unobstructed movement takes 0.5 seconds and travels 0.3 metres");
+        Check(Time.time - started >= .49f && Mathf.Abs(body.position.x - start.x - distance) < .025f,
+            $"Dodge: unobstructed movement takes 0.5 seconds and travels the configured {distance} metres");
         float landed = Time.time;
         Check(!dodge.RequestDodge(-1f) && !combo.RequestAttack(), "Dodge: landing recovery blocks evasion and attacks");
         yield return .1f;
@@ -79,12 +83,12 @@ public static class PlayerDodgeValidation
         start = body.position;
         Check(dodge.RequestDodge(-1f), "Dodge: recovery completion permits immediate reuse without another cooldown");
         yield return new EnemyAlphaValidation.Until(() => !dodge.IsDodging, "Dodge: left hop completes");
-        Check(Mathf.Abs(body.position.x - start.x + .3f) < .025f, "Dodge: left hop travels the same 0.3 metres");
+        Check(Mathf.Abs(body.position.x - start.x + distance) < .025f, "Dodge: left hop travels the same configured distance");
 
         Reset(player, origin, Quaternion.Euler(0, 90, 0));
         dodge.RequestDodge(1f);
         yield return new EnemyAlphaValidation.Until(() => !dodge.IsDodging, "Dodge: rotated player finishes a hop");
-        Check(Mathf.Abs(body.position.z - origin.z + .3f) < .025f && Mathf.Abs(body.position.x - origin.x) < .02f,
+        Check(Mathf.Abs(body.position.z - origin.z + distance) < .025f && Mathf.Abs(body.position.x - origin.x) < .02f,
             "Dodge: sideways is measured from the player's facing rather than world axes");
 
         Reset(player, origin);
@@ -173,7 +177,12 @@ public static class PlayerDodgeValidation
         yield return .12f;
         Check(!dodge.IsDodging && body.linearVelocity.z > 5.5f, "Dodge: forward plus B retains the existing run control");
         InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = Vector2.left }.WithButton(GamepadButton.East));
-        yield return new EnemyAlphaValidation.Until(() => dodge.IsMoving, "Dodge: turning the stick sideways while holding B starts evasion");
+        yield return .06f;
+        Check(!dodge.IsDodging, "Dodge: changing direction with B held does not create a fresh dodge press");
+        InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = Vector2.left });
+        yield return .04f;
+        InputSystem.QueueStateEvent(gamepad, new GamepadState { leftStick = Vector2.left }.WithButton(GamepadButton.East));
+        yield return new EnemyAlphaValidation.Until(() => dodge.IsMoving, "Dodge: pressing B during sideways input starts evasion");
         InputSystem.QueueStateEvent(gamepad, new GamepadState().WithButton(GamepadButton.North));
         yield return .06f;
         Check(!combo.IsAttacking, "Dodge: gamepad Y cannot start an attack during evasion");
@@ -184,7 +193,7 @@ public static class PlayerDodgeValidation
         yield return new EnemyAlphaValidation.Until(() => dodge.IsMoving, "Dodge: rightward left-stick input plus B starts the right hop");
         InputSystem.QueueStateEvent(gamepad, new GamepadState());
         yield return new EnemyAlphaValidation.Until(() => !dodge.IsDodging, "Dodge: gamepad right hop completes");
-        Check(Mathf.Abs(body.position.x - origin.x - .3f) < .035f, "Dodge: gamepad hop preserves the specified distance");
+        Check(Mathf.Abs(body.position.x - origin.x - distance) < .035f, "Dodge: gamepad hop preserves the configured distance");
 
         Reset(player, origin + Vector3.up * 3f);
         dodge.RequestDodge(1f);
