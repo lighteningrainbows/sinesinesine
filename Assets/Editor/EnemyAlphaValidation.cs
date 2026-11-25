@@ -16,6 +16,8 @@ public static class EnemyAlphaValidation
     private const string ComboRunKey = "EnemyAlphaValidation.IncludeCombo";
     private const string ComboOnlyKey = "EnemyAlphaValidation.ComboOnly";
     private const string DodgeRunKey = "EnemyAlphaValidation.IncludeDodge";
+    private const string TigerRunKey = "EnemyAlphaValidation.IncludeTiger";
+    private const string TigerOnlyKey = "EnemyAlphaValidation.TigerOnly";
     private static IEnumerator checks;
     private static Until pending;
     private static float nextTime;
@@ -43,6 +45,8 @@ public static class EnemyAlphaValidation
 
     public static void RunBatch()
     {
+        SessionState.SetBool(TigerRunKey, false);
+        SessionState.SetBool(TigerOnlyKey, false);
         SessionState.SetBool(DodgeRunKey, false);
         SessionState.SetBool(ComboOnlyKey, false);
         SessionState.SetBool(ComboRunKey, false);
@@ -60,6 +64,8 @@ public static class EnemyAlphaValidation
 
     public static void RunBossBatch()
     {
+        SessionState.SetBool(TigerRunKey, false);
+        SessionState.SetBool(TigerOnlyKey, false);
         SessionState.SetBool(DodgeRunKey, false);
         SessionState.SetBool(ComboOnlyKey, false);
         SessionState.SetBool(ComboRunKey, false);
@@ -78,6 +84,8 @@ public static class EnemyAlphaValidation
     [MenuItem("Tools/Player/Validate Combo And Combat")]
     public static void RunComboBatch()
     {
+        SessionState.SetBool(TigerRunKey, false);
+        SessionState.SetBool(TigerOnlyKey, false);
         SessionState.SetBool(DodgeRunKey, false);
         SessionState.SetBool(ComboOnlyKey, false);
         SessionState.SetBool(ComboRunKey, true);
@@ -96,6 +104,8 @@ public static class EnemyAlphaValidation
 
     public static void RunComboOnlyBatch()
     {
+        SessionState.SetBool(TigerRunKey, false);
+        SessionState.SetBool(TigerOnlyKey, false);
         SessionState.SetBool(DodgeRunKey, false);
         SessionState.SetBool(ComboOnlyKey, true);
         SessionState.SetBool(ComboRunKey, true);
@@ -110,6 +120,8 @@ public static class EnemyAlphaValidation
     {
         // Respect cancellation before opening any scenes from the editor menu.
         if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        SessionState.SetBool(TigerRunKey, false);
+        SessionState.SetBool(TigerOnlyKey, false);
         SessionState.SetBool(DodgeRunKey, true);
         SessionState.SetBool(ComboOnlyKey, false);
         SessionState.SetBool(ComboRunKey, true);
@@ -118,6 +130,31 @@ public static class EnemyAlphaValidation
         {
             PlayerDodgeSetup.Apply();
             PlayerDodgeValidation.ValidateAssets();
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            SessionState.SetBool(RunKey, true);
+            EditorApplication.isPlaying = true;
+        }
+        catch (Exception error) { Fail(error); }
+    }
+
+    [MenuItem("Tools/Companions/Validate Tiger And Combat")]
+    public static void RunTigerBatch() => StartTigerChecks(false);
+
+    public static void RunTigerOnlyBatch() => StartTigerChecks(true);
+
+    private static void StartTigerChecks(bool onlyTiger)
+    {
+        if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        SessionState.SetBool(TigerRunKey, true);
+        SessionState.SetBool(TigerOnlyKey, onlyTiger);
+        SessionState.SetBool(DodgeRunKey, !onlyTiger);
+        SessionState.SetBool(ComboOnlyKey, false);
+        SessionState.SetBool(ComboRunKey, !onlyTiger);
+        SessionState.SetBool(BossRunKey, !onlyTiger);
+        try
+        {
+            TigerCompanionSetup.Apply();
+            TigerCompanionValidation.ValidateAssets();
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             SessionState.SetBool(RunKey, true);
             EditorApplication.isPlaying = true;
@@ -165,7 +202,8 @@ public static class EnemyAlphaValidation
         assertions = 0;
         hasFailed = false;
         results.Clear();
-        checks = SessionState.GetBool(ComboOnlyKey, false) ? PlayerComboValidation.RunChecks() :
+        checks = SessionState.GetBool(TigerOnlyKey, false) ? TigerCompanionValidation.RunChecks() :
+            SessionState.GetBool(ComboOnlyKey, false) ? PlayerComboValidation.RunChecks() :
             SessionState.GetBool(BossRunKey, false) ? RunAllChecks() : RunChecks();
         nextTime = 0f;
         pending = null;
@@ -476,6 +514,11 @@ public static class EnemyAlphaValidation
             IEnumerator dodge = PlayerDodgeValidation.RunChecks();
             while (dodge.MoveNext()) yield return dodge.Current;
         }
+        if (SessionState.GetBool(TigerRunKey, false))
+        {
+            IEnumerator tiger = TigerCompanionValidation.RunChecks();
+            while (tiger.MoveNext()) yield return tiger.Current;
+        }
     }
 
     private static EnemyController FindRespawnEnemy()
@@ -588,8 +631,9 @@ public static class EnemyAlphaValidation
         Directory.CreateDirectory(".utmp");
         bool comboRun = SessionState.GetBool(ComboRunKey, false);
         bool dodgeRun = SessionState.GetBool(DodgeRunKey, false);
-        File.WriteAllLines(dodgeRun ? ".utmp/dodge-validation.txt" : comboRun ? ".utmp/combo-validation.txt" : bossRun ? ".utmp/boss-validation.txt" : ".utmp/enemy-alpha-validation.txt", results);
-        Debug.Log($"{(dodgeRun ? "DODGE" : comboRun ? "COMBO" : bossRun ? "BOSS" : "ENEMY_ALPHA")}_VALIDATION_PASSED: {assertions} checks");
+        bool tigerRun = SessionState.GetBool(TigerRunKey, false);
+        File.WriteAllLines(tigerRun ? ".utmp/tiger-validation.txt" : dodgeRun ? ".utmp/dodge-validation.txt" : comboRun ? ".utmp/combo-validation.txt" : bossRun ? ".utmp/boss-validation.txt" : ".utmp/enemy-alpha-validation.txt", results);
+        Debug.Log($"{(tigerRun ? "TIGER" : dodgeRun ? "DODGE" : comboRun ? "COMBO" : bossRun ? "BOSS" : "ENEMY_ALPHA")}_VALIDATION_PASSED: {assertions} checks");
         if (Application.isBatchMode) EditorApplication.Exit(0);
         else EditorApplication.isPlaying = false;
     }
@@ -604,8 +648,9 @@ public static class EnemyAlphaValidation
         results.Add("FAIL " + error);
         bool comboRun = SessionState.GetBool(ComboRunKey, false);
         bool dodgeRun = SessionState.GetBool(DodgeRunKey, false);
-        File.WriteAllLines(dodgeRun ? ".utmp/dodge-validation.txt" : comboRun ? ".utmp/combo-validation.txt" : bossRun ? ".utmp/boss-validation.txt" : ".utmp/enemy-alpha-validation.txt", results);
-        Debug.LogError((dodgeRun ? "DODGE" : comboRun ? "COMBO" : bossRun ? "BOSS" : "ENEMY_ALPHA") + "_VALIDATION_FAILED: " + error);
+        bool tigerRun = SessionState.GetBool(TigerRunKey, false);
+        File.WriteAllLines(tigerRun ? ".utmp/tiger-validation.txt" : dodgeRun ? ".utmp/dodge-validation.txt" : comboRun ? ".utmp/combo-validation.txt" : bossRun ? ".utmp/boss-validation.txt" : ".utmp/enemy-alpha-validation.txt", results);
+        Debug.LogError((tigerRun ? "TIGER" : dodgeRun ? "DODGE" : comboRun ? "COMBO" : bossRun ? "BOSS" : "ENEMY_ALPHA") + "_VALIDATION_FAILED: " + error);
         // Do not shut Unity down reentrantly from an asset-loading/log callback.
         if (Application.isBatchMode) EditorApplication.delayCall += () => EditorApplication.Exit(1);
         else EditorApplication.isPlaying = false;

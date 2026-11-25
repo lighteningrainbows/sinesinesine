@@ -16,6 +16,7 @@ public class CompanionController : MonoBehaviour
     [SerializeField] private RobotData robotData;
 
     public RobotData RobotData => robotData;
+    public Transform FollowTarget => player;
 
     [Header("追従対象")]
     [SerializeField] private Transform player;
@@ -72,6 +73,8 @@ public class CompanionController : MonoBehaviour
     private void Update()
     {
         if (IsKnockedBack) return;
+        RobotRuntimeStats stats = GetComponent<RobotRuntimeStats>();
+        if (stats != null && stats.CurrentHP <= 0) { StopMoving(); return; }
         // 前回の味方として固定中
         if (isFrozenPrevious)
         {
@@ -115,6 +118,10 @@ public class CompanionController : MonoBehaviour
             MaintainHover();
         }
 
+        // An animated attack commits its position until impact or cancellation.
+        CompanionCombat combat = GetComponent<CompanionCombat>();
+        if (combat != null && combat.IsAttacking) { StopMoving(); return; }
+
         switch (currentState)
         {
             case CompanionState.Following:
@@ -143,6 +150,8 @@ public class CompanionController : MonoBehaviour
     // 出撃
     public void Deploy()
     {
+        CompanionCombat combat = GetComponent<CompanionCombat>();
+        if (combat != null) combat.CancelAttack();
         var knockback = GetComponent<FrozenCompanionKnockback>();
         if (knockback != null) knockback.Cancel();
         if (player == null)
@@ -201,6 +210,8 @@ public class CompanionController : MonoBehaviour
     // 通常待機
     public void Standby()
     {
+        CompanionCombat combat = GetComponent<CompanionCombat>();
+        if (combat != null) combat.CancelAttack();
         var knockback = GetComponent<FrozenCompanionKnockback>();
         if (knockback != null) knockback.Cancel();
         isDeployed = false;
@@ -225,6 +236,8 @@ public class CompanionController : MonoBehaviour
     // 交代前の味方をその場に固定
     public void FreezeAsPreviousCompanion()
     {
+        CompanionCombat combat = GetComponent<CompanionCombat>();
+        if (combat != null) combat.CancelAttack();
         var knockback = GetComponent<FrozenCompanionKnockback>();
         if (knockback != null) knockback.Cancel();
         isDeployed = false;
@@ -254,6 +267,8 @@ public class CompanionController : MonoBehaviour
     // 固定状態解除
     public void ReleaseFrozenState()
     {
+        CompanionCombat combat = GetComponent<CompanionCombat>();
+        if (combat != null) combat.CancelAttack();
         var knockback = GetComponent<FrozenCompanionKnockback>();
         if (knockback != null) knockback.Cancel();
         isFrozenPrevious = false;
@@ -387,7 +402,7 @@ public class CompanionController : MonoBehaviour
             return;
         }
 
-        if (distance <= followDistance)
+        if (distance <= followDistance + .05f)
         {
             StopMoving();
             return;

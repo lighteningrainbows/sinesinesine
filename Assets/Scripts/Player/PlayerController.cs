@@ -32,6 +32,16 @@ public class PlayerController : MonoBehaviour
     private bool runInput;
     private bool jumpInput;
 
+    // プレイヤーが走りながら移動しているか
+    public bool IsRunning
+    {
+        get
+        {
+            return runInput &&
+                   moveInput.sqrMagnitude > 0.0001f;
+        }
+    }
+
     private float cameraPitch;
 
     private void Awake()
@@ -148,17 +158,30 @@ public class PlayerController : MonoBehaviour
 
     private void ReadDodgeInput()
     {
-        if (dodge == null) return;
-        bool held = (Gamepad.current != null && Gamepad.current.buttonEast.isPressed) ||
-            (Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed);
-        bool pressed = (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame) ||
-            (Keyboard.current != null && Keyboard.current.leftShiftKey.wasPressedThisFrame);
-        int side = Mathf.Abs(moveInput.x) >= dodge.LateralThreshold ? (moveInput.x > 0 ? 1 : -1) : 0;
-        if (side != 0 && held && (pressed || side != previousDodgeSide))
+        if (dodge == null)
+            return;
+
+        // Bボタンまたは左Shiftを押した瞬間
+        bool pressed =
+            (Gamepad.current != null &&
+             Gamepad.current.buttonEast.wasPressedThisFrame) ||
+            (Keyboard.current != null &&
+             Keyboard.current.leftShiftKey.wasPressedThisFrame);
+
+        // 左右どちらに入力しているか
+        int side =
+            Mathf.Abs(moveInput.x) >= dodge.LateralThreshold
+                ? (moveInput.x > 0 ? 1 : -1)
+                : 0;
+
+        // 左右入力中にBボタンを押した場合だけ回避
+        if (side != 0 && pressed)
         {
-            if (dodge.RequestDodge(side)) jumpInput = false;
+            if (dodge.RequestDodge(side))
+            {
+                jumpInput = false;
+            }
         }
-        previousDodgeSide = side;
     }
 
     private void Move()
